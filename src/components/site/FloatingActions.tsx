@@ -5,7 +5,7 @@ export function FloatingActions() {
   return (
     <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-3">
       <a
-        href={whatsappLink("Hello Umoja Housing Agency, I'd like to inquire.")}
+        href={whatsappLink(`Hello ${SITE.name}, I'd like to inquire.`)}
         target="_blank"
         rel="noopener"
         aria-label="Chat on WhatsApp"

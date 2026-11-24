@@ -1,6 +1,6 @@
 export const SITE = {
-  name: "Umoja Housing Agency",
-  shortName: "Umoja",
+  name: "Yomic Homes",
+  shortName: "Yomic",
   tagline: "Know where you'll stay before you travel",
   phone: "+254715842716",
   phoneDisplay: "+254 715 842 716",

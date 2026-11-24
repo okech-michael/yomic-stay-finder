@@ -4,11 +4,12 @@ import { toast } from "sonner";
 import { Mail, Lock, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithGoogle } from "@/lib/auth";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/yomic-homes-logo.svg";
+import { SITE } from "@/lib/site";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
-    meta: [{ title: "Sign in — Umoja Housing Agency" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: `Sign in — ${SITE.name}` }, { name: "robots", content: "noindex" }],
   }),
   component: Auth,
 });
@@ -62,7 +63,7 @@ function Auth() {
   return (
     <div className="min-h-screen pt-24 pb-12 flex items-center justify-center bg-surface px-4">
       <div className="w-full max-w-md rounded-3xl bg-card p-8 shadow-lift">
-        <img src={logo} alt="Umoja" className="h-14 w-auto mx-auto" />
+        <img src={logo} alt={SITE.name} className="h-14 w-auto mx-auto" />
         <h1 className="mt-6 font-display text-2xl font-bold text-center">
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>

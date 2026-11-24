@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/yomic-homes-logo.svg";
 import { SITE, telLink, whatsappLink } from "@/lib/site";
 
 export function Footer() {
@@ -10,7 +10,7 @@ export function Footer() {
         <div className="md:col-span-2 space-y-4">
           <img
             src={logo}
-            alt="Umoja Housing Agency"
+            alt={SITE.name}
             className="h-14 w-auto bg-white rounded-xl p-2"
           />
           <p className="text-sm text-white/75 max-w-md">
@@ -25,7 +25,7 @@ export function Footer() {
               <Phone className="h-4 w-4" /> Call
             </a>
             <a
-              href={whatsappLink("Hello Umoja, I'd like help finding a short stay.")}
+              href={whatsappLink(`Hello ${SITE.name}, I'd like help finding a short stay.`)}
               target="_blank"
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-full gradient-brand px-4 py-2 text-sm font-semibold hover:shadow-lift transition"

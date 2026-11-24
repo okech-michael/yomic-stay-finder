@@ -9,13 +9,13 @@ import { SITE, telLink, whatsappLink } from "@/lib/site";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Umoja Housing Agency" },
+      { title: `Contact — ${SITE.name}` },
       {
         name: "description",
         content:
-          "Call, WhatsApp or send a message to Umoja Housing Agency. We respond within hours during business days.",
+          `Call, WhatsApp or send a message to ${SITE.name}. We respond within hours during business days.`,
       },
-      { property: "og:title", content: "Contact Umoja Housing Agency" },
+      { property: "og:title", content: `Contact ${SITE.name}` },
       { property: "og:description", content: "Get in touch with our team." },
     ],
   }),

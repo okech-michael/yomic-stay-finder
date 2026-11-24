@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { createBooking } from "@/lib/accommodation.functions";
 import { getProperty, listProperties } from "@/lib/properties.functions";
-import { formatKsh } from "@/lib/site";
+import { SITE, formatKsh } from "@/lib/site";
 import { PropertyCard } from "@/components/site/PropertyCard";
 
 const propQuery = (slug: string) =>
@@ -30,8 +30,8 @@ export const Route = createFileRoute("/properties/$slug")({
     meta: [
       {
         title: loaderData?.title
-          ? `${loaderData.title} — Umoja Housing Agency`
-          : "Property — Umoja Housing Agency",
+          ? `${loaderData.title} — ${SITE.name}`
+          : `Accommodation — ${SITE.name}`,
       },
       {
         name: "description",
@@ -256,7 +256,7 @@ function PropertyDetail() {
           </div>
           <div className="rounded-3xl bg-card p-8 shadow-soft">
             <h3 className="font-display text-xl font-semibold flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" /> Verified by Umoja
+              <ShieldCheck className="h-5 w-5 text-primary" /> Verified by {SITE.shortName}
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
               This accommodation has passed listing verification. Full address and directions are

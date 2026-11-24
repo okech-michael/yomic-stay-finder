@@ -25,7 +25,7 @@ function AgentProfile() {
 
   if (!agent) return null;
 
-  const msg = `Hello, I'm interested in working with ${agent.name} at Umoja Housing Agency.`;
+  const msg = `Hello, I'm interested in working with ${agent.name} at ${SITE.name}.`;
 
   return (
     <div className="pt-24 pb-20 px-4">

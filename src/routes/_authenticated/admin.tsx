@@ -48,7 +48,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SITE, formatKsh } from "@/lib/site";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — Umoja" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: `Admin — ${SITE.shortName}` }, { name: "robots", content: "noindex" }] }),
   component: Admin,
 });
 

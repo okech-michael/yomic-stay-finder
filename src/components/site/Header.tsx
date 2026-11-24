@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Menu, X, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/yomic-homes-logo.svg";
 import { SITE, telLink } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ export function Header() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={logo} alt="Umoja Housing Agency" className="h-14 w-auto sm:h-16 md:h-20" />
+          <img src={logo} alt={SITE.name} className="h-14 w-auto sm:h-16 md:h-20" />
         </Link>
         <nav className="hidden lg:flex items-center gap-1">
           {nav.map((n) => (

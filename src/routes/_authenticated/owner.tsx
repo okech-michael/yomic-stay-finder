@@ -20,7 +20,7 @@ import { SITE, formatKsh } from "@/lib/site";
 
 export const Route = createFileRoute("/_authenticated/owner")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Host dashboard — Umoja" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: `Host dashboard — ${SITE.shortName}` }, { name: "robots", content: "noindex" }] }),
   component: OwnerDashboard,
 });
 

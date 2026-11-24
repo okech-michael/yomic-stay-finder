@@ -46,7 +46,7 @@ const statsOpts = queryOptions({ queryKey: ["stats"], queryFn: () => getStats() 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Umoja Housing Agency — Book a Stay Before You Travel" },
+      { title: `${SITE.name} — Book a Stay Before You Travel` },
       {
         name: "description",
         content:
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "Umoja Housing Agency — Know Where You'll Stay Before You Travel",
+        content: `${SITE.name} — Know Where You'll Stay Before You Travel`,
       },
       {
         property: "og:description",

@@ -733,7 +733,7 @@ BEGIN
     WHEN 'percentage' THEN round(v_total * v_payment_percent / 100.0, 2)
   END;
 
-  v_reference := 'UMJ-' || upper(substr(replace(gen_random_uuid()::TEXT, '-', ''), 1, 12));
+  v_reference := 'YH-' || upper(substr(replace(gen_random_uuid()::TEXT, '-', ''), 1, 12));
   INSERT INTO public.bookings (
     booking_reference, property_id, guest_id, owner_id, check_in, check_out,
     nights, guest_count, nightly_subtotal, cleaning_fee, commission_amount,

@@ -1,16 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Award, Building2, CalendarDays, CheckCircle2, ShieldCheck, Users } from "lucide-react";
+import { SITE } from "@/lib/site";
 
 export const Route = createFileRoute("/list-property")({
   head: () => ({
     meta: [
-      { title: "Host a Stay — Umoja Housing Agency" },
+      { title: `Host a Stay — ${SITE.name}` },
       {
         name: "description",
         content:
           "List and manage short-stay accommodation, set nightly rates, manage availability, and welcome guests travelling across Kenya.",
       },
-      { property: "og:title", content: "Host a stay with Umoja" },
+      { property: "og:title", content: `Host a stay with ${SITE.shortName}` },
       { property: "og:description", content: "Welcome guests who book before they travel." },
     ],
   }),
@@ -108,8 +109,8 @@ function ListProperty() {
               <div className="flex items-start gap-3">
                 <Award className="h-5 w-5 shrink-0 text-primary" />
                 <p>
-                  Listings remain private until they have been reviewed and verified by the Umoja
-                  team.
+                  Listings remain private until they have been reviewed and verified by the{" "}
+                  {SITE.name} team.
                 </p>
               </div>
             </div>

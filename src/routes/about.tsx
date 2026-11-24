@@ -6,13 +6,13 @@ import hero1 from "@/assets/hero-1.jpg";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — Umoja Housing Agency" },
+      { title: `About — ${SITE.name}` },
       {
         name: "description",
         content:
-          "Learn how Umoja helps guests book verified short-stay accommodation before travelling to destinations across Kenya.",
+          `Learn how ${SITE.name} helps guests book verified short-stay accommodation before travelling to destinations across Kenya.`,
       },
-      { property: "og:title", content: "About Umoja Housing Agency" },
+      { property: "og:title", content: `About ${SITE.name}` },
       { property: "og:description", content: "Know where you'll stay before you travel." },
     ],
   }),

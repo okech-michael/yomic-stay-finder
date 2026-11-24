@@ -17,6 +17,7 @@ import { FloatingActions } from "@/components/site/FloatingActions";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AuthChangeEvent } from "@supabase/supabase-js";
+import { SITE } from "@/lib/site";
 
 function NotFoundComponent() {
   return (
@@ -83,16 +84,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Umoja Housing Agency — Book a Stay Before You Travel" },
+      { title: `${SITE.name} — Book a Stay Before You Travel` },
       {
         name: "description",
         content:
           "Find verified short-stay accommodation across Kenya. Compare nightly rates and book a place to stay before you travel.",
       },
-      { name: "author", content: "Umoja Housing Agency" },
+      { name: "author", content: SITE.name },
       {
         property: "og:title",
-        content: "Umoja Housing Agency — Know Where You'll Stay Before You Travel",
+        content: `${SITE.name} — Know Where You'll Stay Before You Travel`,
       },
       {
         property: "og:description",
@@ -102,13 +103,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "theme-color", content: "#0B4F7D" },
-      { property: "og:title", content: "Umoja Housing Agency — Book a Stay Before You Travel" },
-      { name: "twitter:title", content: "Umoja Housing Agency — Book a Stay Before You Travel" },
-      { name: "description", content: "Find verified short-stay accommodation across Kenya and know where you'll stay before you travel." },
-      { property: "og:description", content: "Find verified short-stay accommodation across Kenya and know where you'll stay before you travel." },
+      { name: "twitter:title", content: `${SITE.name} — Book a Stay Before You Travel` },
       { name: "twitter:description", content: "Find verified short-stay accommodation across Kenya and know where you'll stay before you travel." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b8c3563e-3a65-49c1-a674-a733b3c7b09e/id-preview-448cb875--59c3e68c-5141-4453-97b6-a160f4de928b.lovable.app-1782321842967.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b8c3563e-3a65-49c1-a674-a733b3c7b09e/id-preview-448cb875--59c3e68c-5141-4453-97b6-a160f4de928b.lovable.app-1782321842967.png" },
     ],
     links: [
       {

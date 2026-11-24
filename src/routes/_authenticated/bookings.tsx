@@ -5,11 +5,11 @@ import { toast } from "sonner";
 import { CalendarDays, MapPin, ReceiptText, Star } from "lucide-react";
 import { BookingConversation } from "@/components/site/BookingConversation";
 import { guestCancelBooking, guestListBookings, reviewCompletedStay } from "@/lib/accommodation.functions";
-import { formatKsh } from "@/lib/site";
+import { SITE, formatKsh } from "@/lib/site";
 
 export const Route = createFileRoute("/_authenticated/bookings")({
   ssr: false,
-  head: () => ({ meta: [{ title: "My stays — Umoja" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: `My stays — ${SITE.shortName}` }, { name: "robots", content: "noindex" }] }),
   component: GuestBookings,
 });
 

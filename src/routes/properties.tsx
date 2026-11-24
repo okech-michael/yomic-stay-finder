@@ -52,13 +52,13 @@ const queryOpts = (filters: SearchFilters) => {
 export const Route = createFileRoute("/properties")({
   head: () => ({
     meta: [
-      { title: "Find a Stay — Umoja Housing Agency" },
+      { title: `Find a Stay — ${SITE.name}` },
       {
         name: "description",
         content:
           "Find verified short-stay accommodation across Kenya. Compare nightly rates, facilities, and locations, then book before you travel.",
       },
-      { property: "og:title", content: "Find a Stay — Umoja Housing Agency" },
+      { property: "og:title", content: `Find a Stay — ${SITE.name}` },
       { property: "og:description", content: "Know where you'll stay before you travel." },
     ],
   }),

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 120" fill="none">
+  <path d="M12 52 63 12l51 40v56H12V52Z" fill="#0B4F7D"/>
+  <path d="m3 52 60-47 60 47h-23L63 23 26 52H3Z" fill="#F97316"/>
+  <path d="M52 77h22v31H52z" fill="#fff"/>
+  <path d="M28 58h14v14H28zm48 0h14v14H76z" fill="#fff"/>
+  <text x="142" y="71" fill="#0B4F7D" font-family="Arial, Helvetica, sans-serif" font-size="60" font-weight="800" letter-spacing="1">YOMIC</text>
+  <text x="146" y="104" fill="#35291F" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="500" letter-spacing="8">HOMES</text>
+</svg>
