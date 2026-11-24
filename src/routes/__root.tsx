@@ -14,6 +14,7 @@ import { reportError } from "../lib/error-reporting";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { FloatingActions } from "@/components/site/FloatingActions";
+import { PwaInstallProvider } from "@/components/site/PwaInstallProvider";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AuthChangeEvent } from "@supabase/supabase-js";
@@ -103,10 +104,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "theme-color", content: "#0B4F7D" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: SITE.name },
       { name: "twitter:title", content: `${SITE.name} — Book a Stay Before You Travel` },
       { name: "twitter:description", content: "Find verified short-stay accommodation across Kenya and know where you'll stay before you travel." },
     ],
     links: [
+      { rel: "manifest", href: "/manifest.webmanifest" },
       {
         rel: "stylesheet",
         href: appCss,
@@ -153,16 +157,18 @@ function RootComponent() {
   }, [queryClient, router]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <Footer />
-        <FloatingActions />
-        <Toaster position="top-center" richColors />
-      </div>
-    </QueryClientProvider>
+    <PwaInstallProvider>
+      <QueryClientProvider client={queryClient}>
+        <div className="flex min-h-screen flex-col">
+          <Header />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <Footer />
+          <FloatingActions />
+          <Toaster position="top-center" richColors />
+        </div>
+      </QueryClientProvider>
+    </PwaInstallProvider>
   );
 }

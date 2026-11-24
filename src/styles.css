@@ -71,7 +71,7 @@
 
 :root {
   --radius: 0.875rem;
-  /* Brand palette — Yomic Homes */
+  /* Brand palette — Yomic Stays */
   /* Orange #F28C00, Deep blue #0B4F7D, Brown #4A2E14 */
   --background: oklch(0.995 0.003 80);
   --foreground: oklch(0.22 0.05 250);

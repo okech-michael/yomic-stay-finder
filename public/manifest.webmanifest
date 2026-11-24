@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "Yomic Stays",
+  "short_name": "Yomic Stays",
+  "description": "Book your accommodation before you travel.",
+  "start_url": "/account",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0B4F7D",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

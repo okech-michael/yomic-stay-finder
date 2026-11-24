@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
-import logo from "@/assets/yomic-homes-logo.svg";
+import logo from "@/assets/yomic-stays-logo.svg";
 import { SITE, telLink, whatsappLink } from "@/lib/site";
 
 export function Footer() {

@@ -16,6 +16,13 @@ import { createBooking } from "@/lib/accommodation.functions";
 import { getProperty, listProperties } from "@/lib/properties.functions";
 import { SITE, formatKsh } from "@/lib/site";
 import { PropertyCard } from "@/components/site/PropertyCard";
+import { SaveStayButton } from "@/components/site/SaveStayButton";
+import type { Database } from "@/integrations/supabase/types";
+
+type PropertyHead = Pick<
+  Database["public"]["Tables"]["properties"]["Row"],
+  "title" | "description" | "cover_image" | "images"
+>;
 
 const propQuery = (slug: string) =>
   queryOptions({ queryKey: ["property", slug], queryFn: () => getProperty({ data: { slug } }) });
@@ -26,7 +33,7 @@ const relatedQuery = () =>
   });
 
 export const Route = createFileRoute("/properties/$slug")({
-  head: ({ loaderData }: { loaderData?: any }) => ({
+  head: ({ loaderData }: { loaderData?: PropertyHead | null }) => ({
     meta: [
       {
         title: loaderData?.title
@@ -164,6 +171,9 @@ function PropertyDetail() {
               <div className="mt-2 flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="h-4 w-4" /> {p.location} · {p.region}
               </div>
+              <div className="mt-4">
+                <SaveStayButton propertyId={p.id} />
+              </div>
             </div>
             <div className="rounded-3xl gradient-deep text-white p-6 shadow-lift">
               <div className="text-sm text-white/70">Nightly rate</div>
@@ -182,7 +192,9 @@ function PropertyDetail() {
                 <div className="rounded-2xl bg-white/10 p-3">
                   <CalendarDays className="h-4 w-4 mx-auto mb-1" />
                   <div className="text-xs text-white/70">Minimum</div>
-                  <div className="font-semibold">{p.min_nights} night{p.min_nights === 1 ? "" : "s"}</div>
+                  <div className="font-semibold">
+                    {p.min_nights} night{p.min_nights === 1 ? "" : "s"}
+                  </div>
                 </div>
               </div>
             </div>
@@ -192,44 +204,88 @@ function PropertyDetail() {
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-xs font-semibold text-muted-foreground">
                   Arrival
-                  <input name="check_in" type="date" min={today} required className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                  <input
+                    name="check_in"
+                    type="date"
+                    min={today}
+                    required
+                    className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm"
+                  />
                 </label>
                 <label className="text-xs font-semibold text-muted-foreground">
                   Departure
-                  <input name="check_out" type="date" min={today} required className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                  <input
+                    name="check_out"
+                    type="date"
+                    min={today}
+                    required
+                    className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm"
+                  />
                 </label>
               </div>
               <label className="block text-xs font-semibold text-muted-foreground">
                 Guests
-                <input name="guest_count" type="number" min="1" max={p.max_guests} defaultValue="1" required className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                <input
+                  name="guest_count"
+                  type="number"
+                  min="1"
+                  max={p.max_guests}
+                  defaultValue="1"
+                  required
+                  className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm"
+                />
               </label>
               <label className="block text-xs font-semibold text-muted-foreground">
                 Payment method
-                <select name="payment_method" className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm">
+                <select
+                  name="payment_method"
+                  className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm"
+                >
                   <option value="mpesa">M-Pesa</option>
                   <option value="card">Card</option>
                 </select>
               </label>
               <label className="block text-xs font-semibold text-muted-foreground">
                 M-Pesa phone (if selected)
-                <input name="phone" type="tel" placeholder="2547…" className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                <input
+                  name="phone"
+                  type="tel"
+                  placeholder="2547…"
+                  className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm"
+                />
               </label>
               <label className="block text-xs font-semibold text-muted-foreground">
                 Email for receipt
-                <input name="email" type="email" className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                <input
+                  name="email"
+                  type="email"
+                  className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm"
+                />
               </label>
               <label className="block text-xs font-semibold text-muted-foreground">
                 Note to host (optional)
-                <textarea name="special_requests" rows={2} maxLength={2000} className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                <textarea
+                  name="special_requests"
+                  rows={2}
+                  maxLength={2000}
+                  className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm"
+                />
               </label>
-              {bookingError && <p role="alert" className="text-sm text-destructive">{bookingError}</p>}
+              {bookingError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {bookingError}
+                </p>
+              )}
               <button className="w-full rounded-full gradient-brand px-6 py-3.5 font-semibold text-white shadow-soft hover:shadow-lift transition">
                 Continue to secure payment
               </button>
               <p className="text-center text-xs text-muted-foreground">
-                Sign in is required to book. Payment, fees, and cancellation terms are shown before confirmation.
+                Sign in is required to book. Payment, fees, and cancellation terms are shown before
+                confirmation.
               </p>
-              <Link to="/auth" className="block text-center text-sm font-semibold text-primary">Sign in or create an account</Link>
+              <Link to="/auth" className="block text-center text-sm font-semibold text-primary">
+                Sign in or create an account
+              </Link>
             </form>
           </div>
         </div>
@@ -272,20 +328,20 @@ function PropertyDetail() {
                 <dd className="font-semibold">{p.location}</dd>
               </div>
               <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Nightly rate</dt>
-                  <dd className="font-semibold">{formatKsh(p.nightly_rate)}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Cleaning fee</dt>
-                  <dd className="font-semibold">{formatKsh(p.cleaning_fee)}</dd>
+                <dt className="text-muted-foreground">Nightly rate</dt>
+                <dd className="font-semibold">{formatKsh(p.nightly_rate)}</dd>
               </div>
               <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Check-in</dt>
-                  <dd className="font-semibold">{p.check_in_time.slice(0, 5)}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Check-out</dt>
-                  <dd className="font-semibold">{p.check_out_time.slice(0, 5)}</dd>
+                <dt className="text-muted-foreground">Cleaning fee</dt>
+                <dd className="font-semibold">{formatKsh(p.cleaning_fee)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Check-in</dt>
+                <dd className="font-semibold">{p.check_in_time.slice(0, 5)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Check-out</dt>
+                <dd className="font-semibold">{p.check_out_time.slice(0, 5)}</dd>
               </div>
             </dl>
           </div>

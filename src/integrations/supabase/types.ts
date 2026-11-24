@@ -301,6 +301,11 @@ export type Database = {
         };
         Relationships: [];
       };
+      saved_properties: SupabaseTable<{
+        created_at: string;
+        property_id: string;
+        user_id: string;
+      }>;
       properties: SupabaseTable<PropertyRow>;
       viewing_payments: SupabaseTable<{
         amount: number;

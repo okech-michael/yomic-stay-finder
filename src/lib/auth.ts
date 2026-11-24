@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function signInWithGoogle() {
-  const redirectTo = `${window.location.origin}/admin`;
+  const redirectTo = `${window.location.origin}/account`;
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Mail, Lock, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithGoogle } from "@/lib/auth";
-import logo from "@/assets/yomic-homes-logo.svg";
+import logo from "@/assets/yomic-stays-logo.svg";
 import { SITE } from "@/lib/site";
 
 export const Route = createFileRoute("/auth")({
@@ -31,7 +31,7 @@ function Auth() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/bookings`,
+            emailRedirectTo: `${window.location.origin}/account`,
             data: { full_name: String(fd.get("full_name") || "") },
           },
         });
@@ -41,7 +41,7 @@ function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Signed in");
-        nav({ to: "/bookings" });
+        nav({ to: "/account" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Authentication failed");
@@ -68,7 +68,9 @@ function Auth() {
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground text-center">
-          {mode === "signin" ? "Sign in to manage your stays or host accommodation" : "Book your next stay with confidence"}
+          {mode === "signin"
+            ? "Sign in to manage your stays or host accommodation"
+            : "Book your next stay with confidence"}
         </p>
 
         <button

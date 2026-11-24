@@ -1,5 +1,5 @@
 export const SITE = {
-  name: "Yomic Homes",
+  name: "Yomic Stays",
   shortName: "Yomic",
   tagline: "Know where you'll stay before you travel",
   phone: "+254715842716",

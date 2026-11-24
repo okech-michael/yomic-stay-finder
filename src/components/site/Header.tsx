@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Menu, X, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
-import logo from "@/assets/yomic-homes-logo.svg";
+import logo from "@/assets/yomic-stays-logo.svg";
 import { SITE, telLink } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +9,7 @@ const nav = [
   { to: "/", label: "Home" },
   { to: "/properties", label: "Find a Stay" },
   { to: "/list-property", label: "Host a Stay" },
-  { to: "/bookings", label: "My Stays" },
+  { to: "/account", label: "My Account" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
 ] as const;

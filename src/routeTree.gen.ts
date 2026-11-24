@@ -17,6 +17,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ListPropertyRouteImport } from './routes/list-property'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedOwnerRouteImport } from './routes/_authenticated/owner'
@@ -64,6 +65,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/list-property': typeof ListPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/owner': typeof AuthenticatedOwnerRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/list-property': typeof ListPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/owner': typeof AuthenticatedOwnerRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/list-property': typeof ListPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/owner': typeof AuthenticatedOwnerRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/list-property'
     | '/properties'
     | '/sitemap.xml'
+    | '/account'
     | '/admin'
     | '/bookings'
     | '/owner'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/list-property'
     | '/properties'
     | '/sitemap.xml'
+    | '/account'
     | '/admin'
     | '/bookings'
     | '/owner'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/list-property'
     | '/properties'
     | '/sitemap.xml'
+    | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/bookings'
     | '/_authenticated/owner'
@@ -274,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -327,12 +346,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
   AuthenticatedOwnerRoute: typeof AuthenticatedOwnerRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
   AuthenticatedOwnerRoute: AuthenticatedOwnerRoute,
