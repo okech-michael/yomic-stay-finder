@@ -62,7 +62,9 @@ export const Route = createFileRoute("/properties/$slug")({
   errorComponent: ({ error }) => (
     <div className="pt-32 pb-20 text-center">
       <h1 className="font-display text-3xl font-bold">Could not load property</h1>
-      <p className="mt-2 text-muted-foreground">{error.message}</p>
+      <p className="mt-2 text-muted-foreground">
+        {error instanceof Error ? error.message : "Please try again later."}
+      </p>
     </div>
   ),
 });
