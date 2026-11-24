@@ -1,18 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-};
-
-type PwaInstallContextValue = {
-  canInstall: boolean;
-  isInstalled: boolean;
-  install: () => Promise<"accepted" | "dismissed" | "unavailable">;
-};
-
-const PwaInstallContext = createContext<PwaInstallContextValue | null>(null);
+import { PwaInstallContext, type InstallPromptEvent } from "@/components/site/PwaInstallContext";
 
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
@@ -66,10 +54,4 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   );
 
   return <PwaInstallContext.Provider value={value}>{children}</PwaInstallContext.Provider>;
-}
-
-export function usePwaInstall() {
-  const value = useContext(PwaInstallContext);
-  if (!value) throw new Error("usePwaInstall must be used within PwaInstallProvider.");
-  return value;
 }

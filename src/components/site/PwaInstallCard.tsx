@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Download, Smartphone } from "lucide-react";
-import { usePwaInstall } from "@/components/site/PwaInstallProvider";
+import { usePwaInstall } from "@/components/site/PwaInstallContext";
 
 export function PwaInstallCard() {
   const { canInstall, isInstalled, install } = usePwaInstall();
