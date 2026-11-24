@@ -17,13 +17,14 @@ import {
   DollarSign,
   MapPin,
   Users,
-  Camera,
-  UploadCloud,
+  BadgeCheck,
+  CalendarDays,
+  CreditCard,
+  RotateCcw,
+  Settings,
 } from "lucide-react";
 import {
   adminListProperties,
-  adminCreateProperty,
-  adminUpdateProperty,
   adminDeleteProperty,
   checkIsAdmin,
   adminListInquiries,
@@ -34,7 +35,15 @@ import {
   adminUpdateAgent,
   adminDeleteAgent,
 } from "@/lib/admin.functions";
-import { uploadPropertyImage } from "@/lib/inquiries.functions";
+import {
+  adminGetPlatformSettings,
+  adminListBookings,
+  adminListRefunds,
+  adminListVerifications,
+  adminReviewListing,
+  adminReviewRefund,
+  adminUpdatePlatformSettings,
+} from "@/lib/accommodation.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { SITE, formatKsh } from "@/lib/site";
 
@@ -54,12 +63,16 @@ function slugify(s: string) {
   );
 }
 
+function policyNumber(policy: unknown, key: string): number | "" {
+  if (typeof policy !== "object" || policy === null || Array.isArray(policy)) return "";
+  const value = (policy as Record<string, unknown>)[key];
+  return typeof value === "number" ? value : "";
+}
+
 function Admin() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const list = useServerFn(adminListProperties);
-  const create = useServerFn(adminCreateProperty);
-  const update = useServerFn(adminUpdateProperty);
   const del = useServerFn(adminDeleteProperty);
   const checkAdmin = useServerFn(checkIsAdmin);
   const listInq = useServerFn(adminListInquiries);
@@ -69,9 +82,17 @@ function Admin() {
   const createAgent = useServerFn(adminCreateAgent);
   const updateAgent = useServerFn(adminUpdateAgent);
   const deleteAgent = useServerFn(adminDeleteAgent);
-  const uploadImage = useServerFn(uploadPropertyImage);
+  const listVerifications = useServerFn(adminListVerifications);
+  const reviewListing = useServerFn(adminReviewListing);
+  const listBookings = useServerFn(adminListBookings);
+  const listRefunds = useServerFn(adminListRefunds);
+  const reviewRefund = useServerFn(adminReviewRefund);
+  const getPlatformSettings = useServerFn(adminGetPlatformSettings);
+  const updatePlatformSettings = useServerFn(adminUpdatePlatformSettings);
 
-  const [tab, setTab] = useState<"properties" | "inquiries" | "messages" | "analytics" | "agents">("properties");
+  const [tab, setTab] = useState<
+    "properties" | "inquiries" | "messages" | "analytics" | "agents" | "verifications" | "bookings" | "refunds" | "settings"
+  >("properties");
 
   const adminQ = useQuery({ queryKey: ["isAdmin"], queryFn: () => checkAdmin() });
   const props = useQuery({
@@ -99,26 +120,30 @@ function Admin() {
     queryFn: () => listAgents(),
     enabled: tab === "agents" && !!adminQ.data?.isAdmin,
   });
+  const verifications = useQuery({
+    queryKey: ["admin", "verifications"],
+    queryFn: () => listVerifications(),
+    enabled: tab === "verifications" && !!adminQ.data?.isAdmin,
+  });
+  const bookings = useQuery({
+    queryKey: ["admin", "bookings"],
+    queryFn: () => listBookings(),
+    enabled: tab === "bookings" && !!adminQ.data?.isAdmin,
+  });
+  const refunds = useQuery({
+    queryKey: ["admin", "refunds"],
+    queryFn: () => listRefunds(),
+    enabled: tab === "refunds" && !!adminQ.data?.isAdmin,
+  });
+  const platformSettings = useQuery({
+    queryKey: ["admin", "platform-settings"],
+    queryFn: () => getPlatformSettings(),
+    enabled: tab === "settings" && !!adminQ.data?.isAdmin,
+  });
 
-  const [editing, setEditing] = useState<any | null>(null);
-  const [showForm, setShowForm] = useState(false);
   const [agentEditing, setAgentEditing] = useState<any | null>(null);
   const [showAgentForm, setShowAgentForm] = useState(false);
 
-  const save = useMutation({
-    mutationFn: async (data: any) => {
-      if (editing?.id) return update({ data: { id: editing.id, patch: data } });
-      return create({ data });
-    },
-    onSuccess: () => {
-      toast.success(editing?.id ? "Property updated" : "Property created");
-      qc.invalidateQueries({ queryKey: ["admin", "props"] });
-      qc.invalidateQueries({ queryKey: ["properties"] });
-      setShowForm(false);
-      setEditing(null);
-    },
-    onError: (e) => toast.error((e as Error).message),
-  });
   const remove = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
@@ -147,6 +172,34 @@ function Admin() {
       qc.invalidateQueries({ queryKey: ["admin", "agents"] });
     },
     onError: (e) => toast.error((e as Error).message),
+  });
+  const reviewListingMutation = useMutation({
+    mutationFn: (data: { propertyId: string; status: "approved" | "rejected"; note?: string }) =>
+      reviewListing({ data }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["admin", "verifications"] });
+      await qc.invalidateQueries({ queryKey: ["admin", "props"] });
+      toast.success("Listing review saved.");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const reviewRefundMutation = useMutation({
+    mutationFn: (data: { refundId: string; status: "approved" | "rejected"; note?: string }) =>
+      reviewRefund({ data }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["admin", "refunds"] });
+      toast.success("Refund review saved.");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const savePlatformSettings = useMutation({
+    mutationFn: (data: Parameters<typeof updatePlatformSettings>[0]["data"]) =>
+      updatePlatformSettings({ data }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["admin", "platform-settings"] });
+      toast.success("Booking policies saved.");
+    },
+    onError: (error) => toast.error(error.message),
   });
 
   async function signOut() {
@@ -184,7 +237,9 @@ function Admin() {
   const properties = props.data ?? [];
   const stats = {
     total: properties.length,
-    available: properties.filter((p: any) => p.available).length,
+    available: properties.filter(
+      (p: any) => p.listing_status === "published" && p.verification_status === "verified",
+    ).length,
     featured: properties.filter((p: any) => p.featured).length,
     inquiries: inquiries.data?.length ?? 0,
     views: analytics.data?.totalViews ?? 0,
@@ -199,7 +254,7 @@ function Admin() {
           <div>
             <h1 className="font-display text-3xl font-bold">Admin Dashboard</h1>
             <p className="text-sm text-muted-foreground">
-              Manage properties, inquiries and messages.
+              Review stays, monitor bookings, and configure platform policies.
             </p>
           </div>
           <button
@@ -212,12 +267,12 @@ function Admin() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Total Properties", v: stats.total, icon: Home },
-            { label: "Available", v: stats.available, icon: BarChart3 },
-            { label: "Featured", v: stats.featured, icon: BarChart3 },
-            { label: "Listing Inquiries", v: stats.inquiries, icon: Inbox },
-            { label: "Property Views", v: stats.views, icon: TrendingUp },
-            { label: "Payments", v: stats.revenue, icon: DollarSign },
+            { label: "Accommodation listings", v: stats.total, icon: Home },
+            { label: "Verified and published", v: stats.available, icon: BadgeCheck },
+            { label: "Featured stays", v: stats.featured, icon: BarChart3 },
+            { label: "Host inquiries", v: stats.inquiries, icon: Inbox },
+            { label: "Listing views", v: stats.views, icon: TrendingUp },
+            { label: "Payments recorded", v: stats.revenue, icon: DollarSign },
           ].map((s: { label: string; v: number; icon: any }) => (
             <div key={s.label} className="rounded-2xl bg-card p-5 shadow-soft">
               <s.icon className="h-5 w-5 text-primary" />
@@ -234,6 +289,10 @@ function Admin() {
             { id: "messages", label: "Contact Messages", icon: MessageSquare },
             { id: "analytics", label: "Analytics", icon: BarChart3 },
             { id: "agents", label: "Agents", icon: Users },
+            { id: "verifications", label: "Listing reviews", icon: BadgeCheck },
+            { id: "bookings", label: "Bookings", icon: CalendarDays },
+            { id: "refunds", label: "Refunds", icon: RotateCcw },
+            { id: "settings", label: "Booking policies", icon: Settings },
           ].map((t) => (
             <button
               key={t.id}
@@ -347,20 +406,284 @@ function Admin() {
           </div>
         )}
 
+        {tab === "verifications" && (
+          <div className="rounded-3xl bg-card p-6 shadow-soft">
+            <h2 className="font-display text-xl font-bold mb-4">Listings awaiting verification</h2>
+            {verifications.error && (
+              <p className="mb-4 text-sm text-destructive">{verifications.error.message}</p>
+            )}
+            <div className="space-y-3">
+              {(verifications.data ?? []).map((item) => (
+                <div key={item.id} className="rounded-2xl border p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold">{item.property?.title ?? "Accommodation listing"}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {item.property?.location ?? "Location unavailable"} ·{" "}
+                        {formatKsh(item.property?.nightly_rate)} per night
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Submitted {new Date(item.submitted_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={reviewListingMutation.isPending}
+                        onClick={() =>
+                          reviewListingMutation.mutate({
+                            propertyId: item.property_id,
+                            status: "approved",
+                          })
+                        }
+                        className="rounded-full gradient-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                      >
+                        Verify and publish
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewListingMutation.isPending}
+                        onClick={() =>
+                          reviewListingMutation.mutate({
+                            propertyId: item.property_id,
+                            status: "rejected",
+                            note: "Listing needs updates before it can be published.",
+                          })
+                        }
+                        className="rounded-full border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!verifications.isLoading && !(verifications.data ?? []).length && (
+                <div className="py-10 text-center text-muted-foreground">
+                  No listings are waiting for review.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "bookings" && (
+          <div className="rounded-3xl bg-card p-6 shadow-soft">
+            <h2 className="font-display text-xl font-bold mb-4">Guest bookings</h2>
+            {bookings.error && <p className="mb-4 text-sm text-destructive">{bookings.error.message}</p>}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b">
+                  <tr>
+                    <th className="py-2 pr-3">Reference</th>
+                    <th className="py-2 pr-3">Stay dates</th>
+                    <th className="py-2 pr-3">Guests</th>
+                    <th className="py-2 pr-3">Amount</th>
+                    <th className="py-2 pr-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(bookings.data ?? []).map((booking) => (
+                    <tr key={booking.id} className="border-b last:border-0">
+                      <td className="py-3 pr-3 font-semibold">{booking.booking_reference}</td>
+                      <td className="py-3 pr-3">
+                        {booking.check_in} – {booking.check_out}
+                      </td>
+                      <td className="py-3 pr-3">{booking.guest_count}</td>
+                      <td className="py-3 pr-3">{formatKsh(booking.total_amount)}</td>
+                      <td className="py-3 pr-3 capitalize">{booking.status.replaceAll("_", " ")}</td>
+                    </tr>
+                  ))}
+                  {!bookings.isLoading && !(bookings.data ?? []).length && (
+                    <tr>
+                      <td colSpan={5} className="py-10 text-center text-muted-foreground">
+                        No bookings recorded yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab === "refunds" && (
+          <div className="rounded-3xl bg-card p-6 shadow-soft">
+            <h2 className="font-display text-xl font-bold mb-4">Refund requests</h2>
+            {refunds.error && <p className="mb-4 text-sm text-destructive">{refunds.error.message}</p>}
+            <div className="space-y-3">
+              {(refunds.data ?? []).map((refund) => (
+                <div key={refund.id} className="rounded-2xl border p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">
+                        {formatKsh(refund.amount)} · {refund.status.replaceAll("_", " ")}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">{refund.reason}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Booking {refund.booking_id} · {new Date(refund.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    {refund.status === "requested" && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={reviewRefundMutation.isPending}
+                          onClick={() =>
+                            reviewRefundMutation.mutate({ refundId: refund.id, status: "approved" })
+                          }
+                          className="rounded-full gradient-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                        >
+                          Approve review
+                        </button>
+                        <button
+                          type="button"
+                          disabled={reviewRefundMutation.isPending}
+                          onClick={() =>
+                            reviewRefundMutation.mutate({ refundId: refund.id, status: "rejected" })
+                          }
+                          className="rounded-full border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {!refunds.isLoading && !(refunds.data ?? []).length && (
+                <div className="py-10 text-center text-muted-foreground">No refund requests.</div>
+              )}
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Approving a request records the decision; issuing funds still requires a configured
+              payment-provider refund workflow.
+            </p>
+          </div>
+        )}
+
+        {tab === "settings" && (
+          <div className="rounded-3xl bg-card p-6 shadow-soft">
+            <h2 className="font-display text-xl font-bold">Booking and commission policies</h2>
+            <p className="mt-1 mb-5 text-sm text-muted-foreground">
+              Booking checkout remains unavailable until each required policy is configured.
+            </p>
+            {platformSettings.error && (
+              <p className="mb-4 text-sm text-destructive">{platformSettings.error.message}</p>
+            )}
+            {platformSettings.data && (
+              <form
+                className="grid gap-4 md:grid-cols-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  const methods = form.getAll("payment_method").map(String);
+                  const percentage = String(form.get("booking_payment_percent") ?? "");
+                  savePlatformSettings.mutate({
+                    commission_bps: Number(form.get("commission_bps")),
+                    commission_bearer: String(form.get("commission_bearer")) as "host" | "guest",
+                    booking_payment_mode: String(form.get("booking_payment_mode")) as
+                      | "full"
+                      | "first_night"
+                      | "percentage",
+                    booking_payment_percent: percentage ? Number(percentage) : null,
+                    cancellation_policy: {
+                      free_cancellation_hours: Number(form.get("free_cancellation_hours")),
+                      refund_before_checkin_percent: Number(
+                        form.get("refund_before_checkin_percent"),
+                      ),
+                      refund_after_deadline_percent: Number(
+                        form.get("refund_after_deadline_percent"),
+                      ),
+                    },
+                    enabled_payment_methods: methods.filter(
+                      (method): method is "mpesa" | "card" =>
+                        method === "mpesa" || method === "card",
+                    ),
+                  });
+                }}
+              >
+                <Field
+                  label="Commission (basis points)"
+                  name="commission_bps"
+                  type="number"
+                  defaultValue={platformSettings.data.commission_bps ?? ""}
+                  required
+                />
+                <Select
+                  label="Commission paid by"
+                  name="commission_bearer"
+                  defaultValue={platformSettings.data.commission_bearer ?? ""}
+                  options={["", "host", "guest"]}
+                />
+                <Select
+                  label="Amount collected at booking"
+                  name="booking_payment_mode"
+                  defaultValue={platformSettings.data.booking_payment_mode ?? ""}
+                  options={["", "full", "first_night", "percentage"]}
+                />
+                <Field
+                  label="Booking payment percent"
+                  name="booking_payment_percent"
+                  type="number"
+                  defaultValue={platformSettings.data.booking_payment_percent ?? ""}
+                />
+                <Field
+                  label="Free cancellation deadline (hours before arrival)"
+                  name="free_cancellation_hours"
+                  type="number"
+                  defaultValue={policyNumber(platformSettings.data.cancellation_policy, "free_cancellation_hours")}
+                  required
+                />
+                <Field
+                  label="Refund before deadline (%)"
+                  name="refund_before_checkin_percent"
+                  type="number"
+                  defaultValue={policyNumber(platformSettings.data.cancellation_policy, "refund_before_checkin_percent")}
+                  required
+                />
+                <Field
+                  label="Refund after deadline (%)"
+                  name="refund_after_deadline_percent"
+                  type="number"
+                  defaultValue={policyNumber(platformSettings.data.cancellation_policy, "refund_after_deadline_percent")}
+                  required
+                />
+                <fieldset className="md:col-span-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Enabled payment methods
+                  </legend>
+                  <div className="mt-2 flex gap-5">
+                    {(["mpesa", "card"] as const).map((method) => (
+                      <label key={method} className="flex items-center gap-2 text-sm capitalize">
+                        <input
+                          type="checkbox"
+                          name="payment_method"
+                          value={method}
+                          defaultChecked={platformSettings.data.enabled_payment_methods.includes(method)}
+                        />
+                        {method}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <button
+                  disabled={savePlatformSettings.isPending}
+                  className="md:col-span-2 justify-self-start rounded-full gradient-brand px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {savePlatformSettings.isPending ? "Saving…" : "Save booking policies"}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
         {tab === "properties" && (
           <div className="rounded-3xl bg-card p-6 shadow-soft">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-xl font-bold">Properties</h2>
-              <button
-                onClick={() => {
-                  setEditing(null);
-                  setShowForm(true);
-                }}
-                className="inline-flex items-center gap-2 rounded-full gradient-brand text-white px-4 py-2 text-sm font-semibold hover:shadow-lift transition"
-              >
-                <Plus className="h-4 w-4" /> New Property
-              </button>
-            </div>
+            <h2 className="font-display text-xl font-bold mb-1">Accommodation listings</h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Owner-submitted stays and retained legacy listings. Review new submissions in Listing reviews.
+            </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b">
@@ -368,9 +691,9 @@ function Admin() {
                     <th className="py-2 pr-3">Title</th>
                     <th className="py-2 pr-3">Type</th>
                     <th className="py-2 pr-3">Location</th>
-                    <th className="py-2 pr-3">Rent</th>
-                    <th className="py-2 pr-3">Status</th>
-                    <th className="py-2 pr-3">Actions</th>
+                    <th className="py-2 pr-3">Nightly rate</th>
+                    <th className="py-2 pr-3">Listing status</th>
+                    <th className="py-2 pr-3">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -379,24 +702,15 @@ function Admin() {
                       <td className="py-3 pr-3 font-semibold">{p.title}</td>
                       <td className="py-3 pr-3">{p.property_type}</td>
                       <td className="py-3 pr-3">{p.location}</td>
-                      <td className="py-3 pr-3 font-semibold">{formatKsh(p.rent)}</td>
+                      <td className="py-3 pr-3 font-semibold">{formatKsh(p.nightly_rate)}</td>
                       <td className="py-3 pr-3">
                         <span
-                          className={`text-xs rounded-full px-2 py-0.5 ${p.available ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}
+                          className={`text-xs rounded-full px-2 py-0.5 ${p.listing_status === "published" && p.verification_status === "verified" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}
                         >
-                          {p.available ? "Available" : "Taken"}
+                          {p.listing_status.replaceAll("_", " ")} · {p.verification_status}
                         </span>
                       </td>
                       <td className="py-3 pr-3 flex gap-2">
-                        <button
-                          onClick={() => {
-                            setEditing(p);
-                            setShowForm(true);
-                          }}
-                          className="p-2 rounded-lg hover:bg-muted"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
                         <button
                           onClick={() => confirm(`Delete "${p.title}"?`) && remove.mutate(p.id)}
                           className="p-2 rounded-lg hover:bg-red-50 text-red-600"
@@ -409,7 +723,7 @@ function Admin() {
                   {properties.length === 0 && (
                     <tr>
                       <td colSpan={6} className="py-10 text-center text-muted-foreground">
-                        No properties yet. Add your first listing.
+                        No accommodation listings yet.
                       </td>
                     </tr>
                   )}
@@ -479,18 +793,6 @@ function Admin() {
           </div>
         )}
 
-        {showForm && (
-          <PropertyForm
-            initial={editing}
-            onCancel={() => {
-              setShowForm(false);
-              setEditing(null);
-            }}
-            onSubmit={(d) => save.mutate(d)}
-            saving={save.isPending}
-          />
-        )}
-
         {showAgentForm && (
           <AgentForm
             initial={agentEditing}
@@ -503,243 +805,6 @@ function Admin() {
           />
         )}
       </div>
-    </div>
-  );
-}
-
-function PropertyForm({
-  initial,
-  onCancel,
-  onSubmit,
-  saving,
-}: {
-  initial: any;
-  onCancel: () => void;
-  onSubmit: (d: any) => void;
-  saving: boolean;
-}) {
-  const uploadImage = useServerFn(uploadPropertyImage);
-  const [imageInput, setImageInput] = useState<string>(
-    ((initial?.images ?? []) as string[]).join("\n"),
-  );
-  const [amenities, setAmenities] = useState<string[]>(initial?.amenities ?? []);
-  const [uploading, setUploading] = useState(false);
-
-  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const result = reader.result as string;
-        const base64 = result.split(",")[1];
-        const res = await uploadImage({
-          data: {
-            fileName: file.name,
-            contentType: file.type || "image/jpeg",
-            file: base64,
-          },
-        });
-        const nextValues = [res.url, ...imageInput.split("\n").filter(Boolean)].filter(Boolean);
-        setImageInput(nextValues.join("\n"));
-        toast.success("Image uploaded");
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      setUploading(false);
-      toast.error((error as Error).message);
-    }
-  }
-
-  function handle(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const title = String(fd.get("title") || "");
-    const images = imageInput
-      .split("\n")
-      .map((s: string) => s.trim())
-      .filter(Boolean);
-    onSubmit({
-      title,
-      slug: String(fd.get("slug") || slugify(title)),
-      description: String(fd.get("description") || ""),
-      property_type: String(fd.get("property_type") || "Bedsitter"),
-      location: String(fd.get("location") || ""),
-      region: String(fd.get("region") || "Gusii"),
-      address: String(fd.get("address") || ""),
-      rent: Number(fd.get("rent") || 0),
-      deposit: Number(fd.get("deposit") || 0) || null,
-      viewing_fee: Number(fd.get("viewing_fee") || 300),
-      bedrooms: Number(fd.get("bedrooms") || 0),
-      bathrooms: Number(fd.get("bathrooms") || 1),
-      cover_image: images[0] || null,
-      images,
-      amenities,
-      available: fd.get("available") === "on",
-      featured: fd.get("featured") === "on",
-      agent_name: String(fd.get("agent_name") || SITE.name),
-      agent_phone: String(fd.get("agent_phone") || SITE.phone),
-    });
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur flex items-center justify-center p-4 overflow-auto">
-      <form
-        onSubmit={handle}
-        className="w-full max-w-3xl bg-card rounded-3xl p-6 shadow-lift my-8 space-y-4"
-      >
-        <h3 className="font-display text-2xl font-bold">
-          {initial?.id ? "Edit property" : "New property"}
-        </h3>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <Field label="Title" name="title" defaultValue={initial?.title} required />
-          <Field
-            label="Slug (URL)"
-            name="slug"
-            defaultValue={initial?.slug}
-            placeholder="auto-generated"
-          />
-          <Select
-            label="Type"
-            name="property_type"
-            defaultValue={initial?.property_type ?? "Bedsitter"}
-            options={SITE.propertyTypes}
-          />
-          <Select
-            label="Location"
-            name="location"
-            defaultValue={initial?.location ?? SITE.regions[0]}
-            options={SITE.regions}
-          />
-          <Field label="Address" name="address" defaultValue={initial?.address} />
-          <Field label="Region" name="region" defaultValue={initial?.region ?? "Gusii"} />
-          <Field
-            label="Rent (KSh)"
-            name="rent"
-            type="number"
-            defaultValue={initial?.rent ?? 0}
-            required
-          />
-          <Field
-            label="Deposit (KSh)"
-            name="deposit"
-            type="number"
-            defaultValue={initial?.deposit ?? 0}
-          />
-          <Field
-            label="Viewing Fee (KSh)"
-            name="viewing_fee"
-            type="number"
-            defaultValue={initial?.viewing_fee ?? 300}
-          />
-          <Field
-            label="Bedrooms"
-            name="bedrooms"
-            type="number"
-            defaultValue={initial?.bedrooms ?? 0}
-          />
-          <Field
-            label="Bathrooms"
-            name="bathrooms"
-            type="number"
-            defaultValue={initial?.bathrooms ?? 1}
-          />
-          <Field
-            label="Agent name"
-            name="agent_name"
-            defaultValue={initial?.agent_name ?? SITE.name}
-          />
-          <Field
-            label="Agent phone"
-            name="agent_phone"
-            defaultValue={initial?.agent_phone ?? SITE.phone}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Description
-          </label>
-          <textarea
-            name="description"
-            rows={4}
-            defaultValue={initial?.description ?? ""}
-            className="mt-1 w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Image URLs (one per line — first is cover)
-          </label>
-          <textarea
-            value={imageInput}
-            onChange={(e) => setImageInput(e.target.value)}
-            rows={3}
-            placeholder="https://..."
-            className="mt-1 w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-          />
-          <div className="mt-3 rounded-2xl border border-dashed p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="font-semibold flex items-center gap-2"><Camera className="h-4 w-4 text-primary" /> Upload gallery image</div>
-                <p className="text-xs text-muted-foreground">Images are stored in Supabase Storage and used in the property gallery.</p>
-              </div>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold hover:bg-muted">
-                <UploadCloud className="h-4 w-4" />
-                {uploading ? "Uploading…" : "Choose file"}
-                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-              </label>
-            </div>
-          </div>
-        </div>
-        <div>
-          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Amenities
-          </label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {SITE.amenities.map((a) => (
-              <button
-                key={a}
-                type="button"
-                onClick={() =>
-                  setAmenities((arr) =>
-                    arr.includes(a) ? arr.filter((x) => x !== a) : [...arr, a],
-                  )
-                }
-                className={`rounded-full px-3 py-1 text-xs font-medium border transition ${amenities.includes(a) ? "gradient-brand text-white border-transparent" : "hover:bg-muted"}`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-4">
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" name="available" defaultChecked={initial?.available ?? true} />{" "}
-            Available
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" name="featured" defaultChecked={initial?.featured ?? false} />{" "}
-            Featured
-          </label>
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-full border px-5 py-2.5 text-sm font-semibold hover:bg-muted"
-          >
-            Cancel
-          </button>
-          <button
-            disabled={saving}
-            className="rounded-full gradient-brand text-white px-6 py-2.5 text-sm font-semibold hover:shadow-lift transition disabled:opacity-60"
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

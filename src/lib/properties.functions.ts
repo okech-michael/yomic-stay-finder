@@ -3,6 +3,18 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
+export const listDestinations = createServerFn({ method: "GET" }).handler(async () => {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from("destinations")
+    .select("id,name,region,slug")
+    .eq("is_active", true)
+    .order("name");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+});
+
 function publicClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const SUPABASE_PUBLISHABLE_KEY =
@@ -19,12 +31,15 @@ function publicClient() {
 
 const ListSchema = z
   .object({
-    location: z.string().optional(),
+    destination: z.string().optional(),
     propertyType: z.string().optional(),
-    maxRent: z.coerce.number().optional(),
-    minRent: z.coerce.number().optional(),
+    maxNightlyRate: z.coerce.number().optional(),
     amenities: z.array(z.string()).optional(),
     featuredOnly: z.boolean().optional(),
+    checkIn: z.string().date().optional(),
+    checkOut: z.string().date().optional(),
+    guestCount: z.coerce.number().int().min(1).optional(),
+    query: z.string().optional(),
     limit: z.coerce.number().min(1).max(60).default(24),
   })
   .partial();
@@ -34,23 +49,53 @@ export const listProperties = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const sb = publicClient();
     if (!sb) return [];
+    if (Boolean(data.checkIn) !== Boolean(data.checkOut)) {
+      throw new Error("Provide both arrival and departure dates.");
+    }
+
     let q = sb
       .from("properties")
       .select(
-        "id,slug,title,property_type,location,region,rent,deposit,bedrooms,bathrooms,amenities,cover_image,images,available,featured,viewing_fee",
+        "id,slug,title,property_type,location,region,nightly_rate,currency,max_guests,bedrooms,bathrooms,amenities,cover_image,images,featured",
       )
+      .eq("listing_status", "published")
+      .eq("verification_status", "verified")
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 24);
-    if (data.location) q = q.eq("location", data.location);
+    if (data.destination) q = q.eq("location", data.destination);
     if (data.propertyType) q = q.eq("property_type", data.propertyType);
-    if (data.maxRent) q = q.lte("rent", data.maxRent);
-    if (data.minRent) q = q.gte("rent", data.minRent);
+    if (data.maxNightlyRate) q = q.lte("nightly_rate", data.maxNightlyRate);
     if (data.featuredOnly) q = q.eq("featured", true);
     if (data.amenities && data.amenities.length) q = q.contains("amenities", data.amenities);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    let result = rows ?? [];
+    if (data.query) {
+      const needle = data.query.toLocaleLowerCase();
+      result = result.filter(
+        (property) =>
+          property.title.toLocaleLowerCase().includes(needle) ||
+          property.location.toLocaleLowerCase().includes(needle),
+      );
+    }
+    if (data.guestCount) {
+      result = result.filter((property) => property.max_guests >= data.guestCount!);
+    }
+    if (!data.checkIn || !data.checkOut || result.length === 0) return result;
+
+    const propertyIds = result.map((property) => property.id);
+    const { data: unavailableProperties, error: availabilityError } = await sb.rpc(
+      "unavailable_property_ids",
+      {
+        p_property_ids: propertyIds,
+        p_check_in: data.checkIn,
+        p_check_out: data.checkOut,
+      },
+    );
+    if (availabilityError) throw new Error(availabilityError.message);
+    const unavailable = new Set((unavailableProperties ?? []).map(({ property_id }) => property_id));
+    return result.filter((property) => !unavailable.has(property.id));
   });
 
 export const getProperty = createServerFn({ method: "GET" })
@@ -62,6 +107,8 @@ export const getProperty = createServerFn({ method: "GET" })
       .from("properties")
       .select("*")
       .eq("slug", data.slug)
+      .eq("listing_status", "published")
+      .eq("verification_status", "verified")
       .maybeSingle();
     if (error) throw new Error(error.message);
     return row;
@@ -93,21 +140,17 @@ export const getStats = createServerFn({ method: "GET" }).handler(async () => {
     return {
       listed: 0,
       available: 0,
-      clients: 1200,
-      placements: 850,
-      regions: 6,
+      confirmedBookings: 0,
+      destinations: 0,
     };
   }
-  const { count } = await sb.from("properties").select("*", { count: "exact", head: true });
-  const { count: available } = await sb
-    .from("properties")
-    .select("*", { count: "exact", head: true })
-    .eq("available", true);
+  const { data, error } = await sb.rpc("get_public_platform_counts");
+  if (error) throw new Error(error.message);
+  const counts = data?.[0];
   return {
-    listed: count ?? 0,
-    available: available ?? 0,
-    clients: 1200,
-    placements: 850,
-    regions: 6,
+    listed: counts?.listed ?? 0,
+    available: counts?.available ?? 0,
+    confirmedBookings: counts?.confirmed_bookings ?? 0,
+    destinations: counts?.destinations ?? 0,
   };
 });

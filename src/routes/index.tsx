@@ -5,7 +5,7 @@ import {
   ArrowRight,
   Search,
   MapPin,
-  Home,
+  CalendarDays,
   CheckCircle2,
   ShieldCheck,
   Zap,
@@ -46,20 +46,20 @@ const statsOpts = queryOptions({ queryKey: ["stats"], queryFn: () => getStats() 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Umoja Housing Agency — Houses for Rent in Kisii & Gusii Region" },
+      { title: "Umoja Housing Agency — Book a Stay Before You Travel" },
       {
         name: "description",
         content:
-          "Browse verified houses across Kisii, Nyamira, Keroka, Ogembo and Suneka. Book viewings, contact agents, and secure your next home with Umoja Housing Agency.",
+          "Find verified short-stay accommodation across Kenya. Compare nightly rates, choose your dates, and arrange where you will stay before you travel.",
       },
       {
         property: "og:title",
-        content: "Umoja Housing Agency — Finding Your Next Home Has Never Been Easier",
+        content: "Umoja Housing Agency — Know Where You'll Stay Before You Travel",
       },
       {
         property: "og:description",
         content:
-          "Verified houses across the Gusii Region. Book viewings, contact trusted agents, and move in with confidence.",
+          "Book verified accommodation in an unfamiliar destination before you set off.",
       },
       { property: "og:image", content: "/__l5e/assets-v1/placeholder/og.jpg" },
     ],
@@ -76,70 +76,70 @@ export const Route = createFileRoute("/")({
 
 const heroImages = [hero1, hero2, hero3];
 const categories = [
-  { name: "Single Rooms", img: catSingle },
-  { name: "Bedsitters", img: catBedsitter },
-  { name: "One Bedroom", img: catOnebed },
-  { name: "Two Bedroom", img: catTwobed },
-  { name: "Three Bedroom", img: catThreebed },
-  { name: "Bungalows", img: catBungalow },
-  { name: "Apartments", img: catApartment },
-  { name: "Commercial Spaces", img: catCommercial },
+  { name: "Apartment", img: catApartment },
+  { name: "Serviced Apartment", img: catOnebed },
+  { name: "Guest House", img: catThreebed },
+  { name: "Inn", img: catBungalow },
+  { name: "Hotel", img: catTwobed },
+  { name: "Short-stay Rental", img: catBedsitter },
+  { name: "Homestay", img: catSingle },
+  { name: "Other", img: catCommercial },
 ];
 const steps = [
-  { n: "01", title: "Browse Properties", text: "Explore verified listings across Kisii & Gusii." },
-  { n: "02", title: "Select Property", text: "Save what interests you and compare features." },
-  { n: "03", title: "Pay Viewing Fee", text: "Quick & secure M-Pesa payment confirms the slot." },
-  { n: "04", title: "Meet Agent", text: "We connect you directly with a trusted agent." },
-  { n: "05", title: "View House", text: "Tour the property in person at your chosen time." },
-  { n: "06", title: "Move In", text: "Sign the lease and settle into your new home." },
+  { n: "01", title: "Choose a destination", text: "Search the town you are travelling to." },
+  { n: "02", title: "Set your dates", text: "See nightly prices and dates that are open." },
+  { n: "03", title: "Compare stays", text: "Review photos, facilities, location, and house rules." },
+  { n: "04", title: "Book before you go", text: "Secure your accommodation before leaving home." },
+  { n: "05", title: "Get confirmation", text: "Keep your booking details and receipt in one place." },
+  { n: "06", title: "Arrive with a plan", text: "Message your host and get directions to your stay." },
 ];
 const reasons = [
   {
     icon: ShieldCheck,
-    title: "Verified Properties",
-    text: "Every listing is inspected and confirmed by our team.",
+    title: "Verified stays",
+    text: "Listings are reviewed before guests can book them.",
   },
   {
     icon: Users,
-    title: "Trusted Agents",
-    text: "Local agents who know the neighborhood inside out.",
+    title: "Local destination knowledge",
+    text: "Compare neighbourhoods and places to stay before you travel.",
   },
   {
     icon: Zap,
-    title: "Fast House Search",
-    text: "Powerful filters get you to the right home in minutes.",
+    title: "Plan ahead",
+    text: "Choose dates and arrange your stay before arriving in town.",
   },
   {
     icon: Wallet,
-    title: "Secure M-Pesa Payments",
-    text: "Pay viewing fees instantly with full receipts.",
+    title: "Clear nightly pricing",
+    text: "See accommodation rates and booking terms before confirming.",
   },
   {
-    icon: Home,
-    title: "Wide Property Network",
-    text: "Single rooms to bungalows across the Gusii Region.",
+    icon: MapPin,
+    title: "Arrival directions",
+    text: "Access the location details for the stay you booked.",
   },
   {
     icon: HeadphonesIcon,
-    title: "Professional Support",
-    text: "Friendly help every step from search to move-in.",
+    title: "Stay connected",
+    text: "Keep your booking details and host conversation together.",
   },
 ];
 const testimonials = [
   {
-    name: "Mercy A.",
-    role: "Tenant, Kisii Town",
-    text: "Umoja made finding a bedsitter so easy. The agent was on time and the house was exactly as listed.",
+    name: "Before you leave",
+    role: "Plan your arrival",
+    text: "Know where you will stay before travelling to an unfamiliar destination.",
   },
   {
-    name: "David O.",
-    role: "Landlord, Suneka",
-    text: "I listed two units and they were both occupied within a week. Highly professional team.",
+    name: "While you compare",
+    role: "Choose with confidence",
+    text: "Compare nightly prices, photos, amenities, and neighbourhoods in advance.",
   },
   {
-    name: "Faith K.",
-    role: "Tenant, Nyamira",
-    text: "I love how transparent everything was. Paid the viewing fee, met the agent, and moved in the same week.",
+    name: "When you arrive",
+    role: "Go straight to your stay",
+    text: "Keep your booking confirmation, host contact, and directions close at hand.",
   },
 ];
 
@@ -185,24 +185,24 @@ function Index() {
           <div className="max-w-3xl space-y-6 animate-fade-up">
             <span className="inline-flex items-center gap-2 rounded-full glass-dark px-4 py-2 text-xs font-medium">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Trusted across the Gusii Region
+              Short stays across Kenya
             </span>
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] text-balance">
-              Finding Your Next Home Has Never Been{" "}
+              Know Where You'll Stay{" "}
               <span className="bg-gradient-to-r from-primary to-orange-300 bg-clip-text text-transparent">
-                Easier
+                Before You Travel
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-white/85 max-w-2xl">
-              Browse verified houses across Kisii and the Gusii Region. Book viewings, contact
-              agents, and secure your next home with {SITE.name}.
+              Arrive in an unfamiliar town knowing where you will stay. Compare verified short-stay
+              accommodation and book before you travel with {SITE.name}.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               <Link
                 to="/properties"
                 className="inline-flex items-center gap-2 rounded-full gradient-brand px-7 py-4 text-base font-semibold shadow-lift hover:-translate-y-0.5 transition"
               >
-                Browse Houses <ArrowRight className="h-4 w-4" />
+                Find a Stay <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href={whatsappLink()}
@@ -210,7 +210,7 @@ function Index() {
                 rel="noopener"
                 className="inline-flex items-center gap-2 rounded-full glass px-7 py-4 text-base font-semibold text-foreground hover:bg-white transition"
               >
-                <MessageCircle className="h-4 w-4" /> Contact Agent
+                <MessageCircle className="h-4 w-4" /> Talk to Us
               </a>
             </div>
           </div>
@@ -219,17 +219,17 @@ function Index() {
           <form
             method="get"
             action="/properties"
-            className="mt-10 glass rounded-3xl p-3 sm:p-4 grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr_auto] gap-2 animate-fade-up shadow-lift"
+            className="mt-10 glass rounded-3xl p-3 sm:p-4 grid grid-cols-1 md:grid-cols-[1.2fr_1.4fr_0.8fr_auto] gap-2 animate-fade-up shadow-lift"
             style={{ animationDelay: "200ms" }}
           >
             <label className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background/80">
               <MapPin className="h-4 w-4 text-primary" />
               <select
-                name="location"
+                name="destination"
                 className="flex-1 bg-transparent text-sm font-medium text-foreground outline-none"
               >
-                <option value="">All locations</option>
-                {SITE.regions.map((r) => (
+                <option value="">Choose destination</option>
+                {SITE.destinations.map((r) => (
                   <option key={r} value={r}>
                     {r}
                   </option>
@@ -237,31 +237,22 @@ function Index() {
               </select>
             </label>
             <label className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background/80">
-              <Home className="h-4 w-4 text-primary" />
-              <select
-                name="propertyType"
-                className="flex-1 bg-transparent text-sm font-medium text-foreground outline-none"
-              >
-                <option value="">Any type</option>
-                {SITE.propertyTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+              <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+              <span className="grid flex-1 grid-cols-2 gap-2">
+                <input name="checkIn" type="date" aria-label="Arrival date" min={new Date().toISOString().slice(0, 10)} className="min-w-0 bg-transparent text-sm font-medium text-foreground outline-none" />
+                <input name="checkOut" type="date" aria-label="Departure date" min={new Date().toISOString().slice(0, 10)} className="min-w-0 bg-transparent text-sm font-medium text-foreground outline-none" />
+              </span>
             </label>
             <label className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background/80">
-              <Wallet className="h-4 w-4 text-primary" />
+              <Users className="h-4 w-4 text-primary" />
               <select
-                name="maxRent"
+                name="guestCount"
                 className="flex-1 bg-transparent text-sm font-medium text-foreground outline-none"
               >
-                <option value="">Any budget</option>
-                <option value="5000">Up to KSh 5,000</option>
-                <option value="10000">Up to KSh 10,000</option>
-                <option value="20000">Up to KSh 20,000</option>
-                <option value="40000">Up to KSh 40,000</option>
-                <option value="100000">Up to KSh 100,000</option>
+                <option value="">Any guests</option>
+                {[1, 2, 3, 4, 5, 6, 8, 10].map((guestCount) => (
+                  <option key={guestCount} value={guestCount}>{guestCount} guest{guestCount > 1 ? "s" : ""}</option>
+                ))}
               </select>
             </label>
             <button
@@ -290,10 +281,10 @@ function Index() {
       <section className="py-20 bg-surface">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { n: Math.max(stats.listed, 120), s: "+", label: "Houses Listed" },
-            { n: stats.clients, s: "+", label: "Happy Clients" },
-            { n: stats.placements, s: "+", label: "Successful Placements" },
-            { n: stats.regions, s: "", label: "Regions Covered" },
+            { n: stats.listed, s: "", label: "Verified stays" },
+            { n: stats.confirmedBookings, s: "", label: "Confirmed bookings" },
+            { n: stats.destinations, s: "", label: "Destinations" },
+            { n: stats.available, s: "", label: "Stays available" },
           ].map((s, i) => (
             <div
               key={i}
@@ -314,10 +305,10 @@ function Index() {
           <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
             <div className="max-w-2xl">
               <span className="text-xs uppercase tracking-widest font-semibold text-primary">
-                Featured Properties
+                Featured Stays
               </span>
               <h2 className="mt-2 font-display text-4xl md:text-5xl font-bold text-balance">
-                Hand-picked homes ready for viewing
+                Hand-picked places to stay before you travel
               </h2>
             </div>
             <Link
@@ -329,7 +320,7 @@ function Index() {
           </div>
           {showcase.length === 0 ? (
             <div className="rounded-3xl border border-dashed p-16 text-center text-muted-foreground">
-              Listings are loading soon. Check back shortly.
+              No stays are available yet. Check back shortly.
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -349,7 +340,7 @@ function Index() {
               Browse by Type
             </span>
             <h2 className="mt-2 font-display text-4xl md:text-5xl font-bold">
-              Find the right kind of home
+              Explore accommodation types
             </h2>
           </div>
           <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
@@ -388,7 +379,7 @@ function Index() {
               How It Works
             </span>
             <h2 className="mt-2 font-display text-4xl md:text-5xl font-bold">
-              From browse to move-in
+              From destination search to arrival
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -419,7 +410,7 @@ function Index() {
               Why Choose Us
             </span>
             <h2 className="mt-2 font-display text-4xl md:text-5xl font-bold">
-              Built on trust and local knowledge
+              Arrive with confidence
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -446,7 +437,7 @@ function Index() {
             Testimonials
           </span>
           <h2 className="mt-2 font-display text-4xl md:text-5xl font-bold">
-            Loved by tenants & landlords
+            A clearer arrival plan
           </h2>
           <div className="mt-12 relative h-56">
             {testimonials.map((t, i) => (
@@ -486,10 +477,10 @@ function Index() {
             <div className="relative grid md:grid-cols-[1.4fr_1fr] gap-10 items-center">
               <div>
                 <h2 className="font-display text-4xl md:text-5xl font-bold text-balance">
-                  Ready to find your next home?
+                  Ready to book before you travel?
                 </h2>
                 <p className="mt-4 text-white/80 max-w-xl">
-                  Talk to our agency now — call, WhatsApp, or list your property in minutes.
+                  Find your stay or register accommodation for travellers arriving in your area.
                 </p>
               </div>
               <div className="flex flex-col gap-3">
@@ -511,7 +502,7 @@ function Index() {
                   to="/list-property"
                   className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-white/30 px-6 py-4 font-semibold hover:bg-white/10 transition"
                 >
-                  <CheckCircle2 className="h-4 w-4" /> List Your Property
+                  <CheckCircle2 className="h-4 w-4" /> Become a Host
                 </Link>
               </div>
             </div>

@@ -30,7 +30,7 @@ function Auth() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/admin`,
+            emailRedirectTo: `${window.location.origin}/bookings`,
             data: { full_name: String(fd.get("full_name") || "") },
           },
         });
@@ -40,7 +40,7 @@ function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Signed in");
-        nav({ to: "/admin" });
+        nav({ to: "/bookings" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Authentication failed");
@@ -67,7 +67,7 @@ function Auth() {
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground text-center">
-          {mode === "signin" ? "Sign in to manage properties" : "Get started in seconds"}
+          {mode === "signin" ? "Sign in to manage your stays or host accommodation" : "Book your next stay with confidence"}
         </p>
 
         <button

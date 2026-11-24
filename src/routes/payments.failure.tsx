@@ -12,10 +12,11 @@ function PaymentFailure() {
         <AlertCircle className="mx-auto h-14 w-14 text-red-600" />
         <h1 className="mt-4 font-display text-3xl font-bold">Payment could not be completed</h1>
         <p className="mt-3 text-muted-foreground">
-          Your viewing fee payment was not completed. You can try again or contact the agent directly.
+          Your stay booking payment was not completed. Check your booking status before trying again
+          to avoid submitting a duplicate payment.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link to="/properties" className="rounded-full border px-5 py-2.5 text-sm font-semibold hover:bg-muted">Try another property</Link>
+          <Link to="/bookings" className="rounded-full border px-5 py-2.5 text-sm font-semibold hover:bg-muted">Check my stays</Link>
           <Link to="/contact" className="rounded-full gradient-brand text-white px-5 py-2.5 text-sm font-semibold hover:shadow-lift transition">Contact support</Link>
         </div>
       </div>

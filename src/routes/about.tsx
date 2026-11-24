@@ -10,10 +10,10 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "Learn about Umoja Housing Agency — serving Kisii, Nyamira, Keroka, Ogembo, Suneka and the wider Gusii Region with verified rental listings and trusted agents.",
+          "Learn how Umoja helps guests book verified short-stay accommodation before travelling to destinations across Kenya.",
       },
       { property: "og:title", content: "About Umoja Housing Agency" },
-      { property: "og:description", content: "Verified housing across the Gusii Region." },
+      { property: "og:description", content: "Know where you'll stay before you travel." },
     ],
   }),
   component: About,
@@ -34,7 +34,7 @@ function About() {
             About Us
           </span>
           <h1 className="mt-2 font-display text-5xl md:text-6xl font-bold max-w-3xl text-balance">
-            A housing agency built on trust and local roots.
+            Helping you arrive with a place to stay.
           </h1>
         </div>
       </section>
@@ -44,14 +44,13 @@ function About() {
           <div className="prose-lg">
             <h2 className="font-display text-3xl md:text-4xl font-bold">Our Story</h2>
             <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-              {SITE.name} was founded to make finding a home in Kisii and the wider Gusii Region
-              simple, transparent, and trustworthy. We saw too many tenants frustrated by unverified
-              listings and landlords struggling to fill vacant units. We exist to connect them
-              properly.
+              {SITE.name} helps travellers arrange a safe, verified place to stay before setting
+              out for an unfamiliar destination. Guests can compare short-stay options, see nightly
+              prices and facilities, and book in advance instead of searching after arrival.
             </p>
             <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-              Today we serve Kisii, Nyamira, Keroka, Ogembo, Suneka and surrounding areas — with
-              plans to grow across the entire Nyanza Region.
+              From a few nights while relocating to a business trip or temporary stay, our goal is
+              to make the arrival clearer for guests and the booking process dependable for hosts.
             </p>
           </div>
 
@@ -60,15 +59,15 @@ function About() {
               <Target className="h-8 w-8 text-primary" />
               <h3 className="mt-3 font-display text-2xl font-bold">Our Mission</h3>
               <p className="mt-2 text-muted-foreground">
-                To make every home-search experience transparent, fast, and dignified — for tenants
-                and landlords alike.
+                To make booking accommodation before travel transparent, dependable, and welcoming
+                for guests and hosts.
               </p>
             </div>
             <div className="rounded-3xl bg-card p-8 shadow-soft border-l-4 border-secondary">
               <Telescope className="h-8 w-8 text-secondary" />
               <h3 className="mt-3 font-display text-2xl font-bold">Our Vision</h3>
               <p className="mt-2 text-muted-foreground">
-                To be the most trusted property platform across the Nyanza Region within five years.
+                To help people travel to destinations across Kenya knowing where they will stay.
               </p>
             </div>
           </div>
@@ -78,7 +77,7 @@ function About() {
               <MapPin className="h-7 w-7 text-primary" /> Where we operate
             </h2>
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {SITE.regions.map((r) => (
+              {SITE.destinations.map((r) => (
                 <div
                   key={r}
                   className="rounded-2xl bg-card border p-5 shadow-soft hover:shadow-lift transition flex items-center gap-3"
@@ -94,8 +93,8 @@ function About() {
             <HeartHandshake className="h-10 w-10 text-primary" />
             <h2 className="mt-4 font-display text-3xl md:text-4xl font-bold">Community first</h2>
             <p className="mt-3 text-white/80 max-w-2xl">
-              We're part of the communities we serve. Every viewing, every move-in, every
-              recommendation is a chance to strengthen housing in the Gusii Region.
+              Every verified listing and completed booking helps guests arrive with more confidence
+              and gives local accommodation owners a way to welcome them.
             </p>
             <Link
               to="/contact"

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { MapPin, Bed, Bath, Eye } from "lucide-react";
+import { MapPin, Bed, Users, Eye } from "lucide-react";
 import { formatKsh } from "@/lib/site";
 
 type P = {
@@ -8,12 +8,12 @@ type P = {
   title: string;
   property_type: string;
   location: string;
-  rent: number;
+  nightly_rate: number | null;
+  max_guests: number;
   bedrooms: number | null;
   bathrooms: number | null;
   cover_image: string | null;
   images: string[] | null;
-  available: boolean;
   featured: boolean;
   amenities: string[] | null;
 };
@@ -50,12 +50,8 @@ export function PropertyCard({ p, index = 0 }: { p: P; index?: number }) {
             </span>
           </div>
           <div className="absolute top-3 right-3">
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                p.available ? "bg-emerald-500/95 text-white" : "bg-red-500/90 text-white"
-              }`}
-            >
-              {p.available ? "Available" : "Taken"}
+            <span className="rounded-full bg-emerald-500/95 px-3 py-1 text-xs font-semibold text-white">
+              Verified
             </span>
           </div>
           <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -76,14 +72,14 @@ export function PropertyCard({ p, index = 0 }: { p: P; index?: number }) {
                   <Bed className="h-4 w-4" /> {p.bedrooms}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <Bath className="h-4 w-4" /> {p.bathrooms ?? 1}
+              <span className="flex items-center gap-1" title="Maximum guests">
+                <Users className="h-4 w-4" /> {p.max_guests} guests
               </span>
             </div>
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">From</div>
+              <div className="text-xs text-muted-foreground">From / night</div>
               <div className="font-display text-lg font-bold text-secondary">
-                {formatKsh(p.rent)}
+                {formatKsh(p.nightly_rate)}
               </div>
             </div>
           </div>

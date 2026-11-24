@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "Home" },
-  { to: "/properties", label: "Properties" },
-  { to: "/list-property", label: "List Property" },
+  { to: "/properties", label: "Find a Stay" },
+  { to: "/list-property", label: "Host a Stay" },
+  { to: "/bookings", label: "My Stays" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
 ] as const;

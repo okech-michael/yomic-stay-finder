@@ -14,8 +14,8 @@ export function Footer() {
             className="h-14 w-auto bg-white rounded-xl p-2"
           />
           <p className="text-sm text-white/75 max-w-md">
-            Verified houses across Kisii and the wider Gusii Region. We help tenants find their next
-            home and landlords reach the right people.
+            Find verified short-stay accommodation across Kenya and know where you will stay before
+            you travel.
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <a
@@ -25,7 +25,7 @@ export function Footer() {
               <Phone className="h-4 w-4" /> Call
             </a>
             <a
-              href={whatsappLink("Hello Umoja Housing, I'd like to inquire about a property.")}
+              href={whatsappLink("Hello Umoja, I'd like help finding a short stay.")}
               target="_blank"
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-full gradient-brand px-4 py-2 text-sm font-semibold hover:shadow-lift transition"
@@ -39,12 +39,17 @@ export function Footer() {
           <ul className="space-y-2 text-sm text-white/75">
             <li>
               <Link to="/properties" className="hover:text-white">
-                Properties
+                Find a Stay
               </Link>
             </li>
             <li>
               <Link to="/list-property" className="hover:text-white">
-                List Your House
+                Host a Stay
+              </Link>
+            </li>
+            <li>
+              <Link to="/bookings" className="hover:text-white">
+                My Stays
               </Link>
             </li>
             <li>
@@ -79,7 +84,7 @@ export function Footer() {
           <span>
             © {new Date().getFullYear()} {SITE.name}. All rights reserved.
           </span>
-          <span>Serving Kisii · Nyamira · Keroka · Ogembo · Suneka</span>
+          <span>Stays across Kenya · Book before you travel</span>
         </div>
       </div>
     </footer>

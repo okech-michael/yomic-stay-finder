@@ -21,6 +21,8 @@ import { Route as PropertiesSlugRouteImport } from './routes/properties.$slug'
 import { Route as PaymentsSuccessRouteImport } from './routes/payments.success'
 import { Route as PaymentsFailureRouteImport } from './routes/payments.failure'
 import { Route as AgentsSlugRouteImport } from './routes/agents.$slug'
+import { Route as AuthenticatedOwnerRouteImport } from './routes/_authenticated/owner'
+import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -82,6 +84,16 @@ const AgentsSlugRoute = AgentsSlugRouteImport.update({
   path: '/agents/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedOwnerRoute = AuthenticatedOwnerRouteImport.update({
+  id: '/owner',
+  path: '/owner',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -97,6 +109,8 @@ export interface FileRoutesByFullPath {
   '/properties': typeof PropertiesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/bookings': typeof AuthenticatedBookingsRoute
+  '/owner': typeof AuthenticatedOwnerRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
@@ -111,6 +125,8 @@ export interface FileRoutesByTo {
   '/properties': typeof PropertiesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/bookings': typeof AuthenticatedBookingsRoute
+  '/owner': typeof AuthenticatedOwnerRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
@@ -127,6 +143,8 @@ export interface FileRoutesById {
   '/properties': typeof PropertiesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
+  '/_authenticated/owner': typeof AuthenticatedOwnerRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
@@ -143,6 +161,8 @@ export interface FileRouteTypes {
     | '/properties'
     | '/sitemap.xml'
     | '/admin'
+    | '/bookings'
+    | '/owner'
     | '/agents/$slug'
     | '/payments/failure'
     | '/payments/success'
@@ -157,6 +177,8 @@ export interface FileRouteTypes {
     | '/properties'
     | '/sitemap.xml'
     | '/admin'
+    | '/bookings'
+    | '/owner'
     | '/agents/$slug'
     | '/payments/failure'
     | '/payments/success'
@@ -172,6 +194,8 @@ export interface FileRouteTypes {
     | '/properties'
     | '/sitemap.xml'
     | '/_authenticated/admin'
+    | '/_authenticated/bookings'
+    | '/_authenticated/owner'
     | '/agents/$slug'
     | '/payments/failure'
     | '/payments/success'
@@ -278,6 +302,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/owner': {
+      id: '/_authenticated/owner'
+      path: '/owner'
+      fullPath: '/owner'
+      preLoaderRoute: typeof AuthenticatedOwnerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bookings': {
+      id: '/_authenticated/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof AuthenticatedBookingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -290,10 +328,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
+  AuthenticatedOwnerRoute: typeof AuthenticatedOwnerRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
+  AuthenticatedOwnerRoute: AuthenticatedOwnerRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

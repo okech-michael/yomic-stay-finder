@@ -158,22 +158,31 @@ export const adminGetAnalytics = createServerFn({ method: "GET" })
 
     const [{ data: properties = [] }, { data: inquiries = [] }, { data: payments = [] }] =
       await Promise.all([
-        sb.from("properties").select("id,location,view_count,available,featured").order("created_at", { ascending: false }),
+        sb
+          .from("properties")
+          .select("id,location,view_count,listing_status,verification_status,featured")
+          .order("created_at", { ascending: false }),
         sb.from("listing_inquiries").select("id").order("created_at", { ascending: false }),
-        sb.from("viewing_payments").select("amount,status").order("created_at", { ascending: false }),
+        sb
+          .from("booking_payments")
+          .select("amount,status")
+          .order("created_at", { ascending: false }),
       ]);
 
     const totalViews = (properties as Array<{ view_count?: number }>).reduce(
       (sum, item) => sum + Number(item.view_count ?? 0),
       0,
     );
-    const paidPayments = (payments ?? []).filter((item: any) => item.status === "succeeded");
+    const paidPayments = (payments ?? []).filter((item: any) =>
+      ["succeeded", "captured", "paid"].includes(item.status),
+    );
     const paidTotal = paidPayments.reduce((sum: number, item: any) => sum + Number(item.amount ?? 0), 0);
     const locationCounts = (properties ?? []).reduce<Record<string, number>>((acc, item: any) => {
       const key = item.location ?? "Unknown";
       acc[key] = (acc[key] ?? 0) + 1;
       return acc;
     }, {});
+    const inquiryCount = inquiries?.length ?? 0;
 
     const popularLocations = Object.entries(locationCounts)
       .sort((a, b) => b[1] - a[1])
@@ -183,16 +192,20 @@ export const adminGetAnalytics = createServerFn({ method: "GET" })
     return {
       totalProperties: properties?.length ?? 0,
       totalViews,
-      leadsGenerated: inquiries?.length ?? 0,
+      leadsGenerated: inquiryCount,
       paymentsReceived: paidTotal,
-      availableProperties: (properties ?? []).filter((item: any) => item.available).length,
+      availableProperties: (properties ?? []).filter(
+        (item: any) =>
+          item.listing_status === "published" &&
+          item.verification_status === "verified",
+      ).length,
       featuredProperties: (properties ?? []).filter((item: any) => item.featured).length,
       popularLocations,
       conversionRate:
-        totalViews > 0 ? Number(((inquiries?.length ?? 0) / totalViews) * 100).toFixed(1) : "0.0",
+        totalViews > 0 ? Number((inquiryCount / totalViews) * 100).toFixed(1) : "0.0",
       paymentConversion:
-        inquiries?.length > 0
-          ? Number((paidPayments.length / (inquiries?.length ?? 1)) * 100).toFixed(1)
+        inquiryCount > 0
+          ? Number((paidPayments.length / inquiryCount) * 100).toFixed(1)
           : "0.0",
     };
   });
@@ -231,6 +244,7 @@ export const adminUpdateAgent = createServerFn({ method: "POST" })
 
 export const adminDeleteAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const sb = adminClient() ?? context.supabase;

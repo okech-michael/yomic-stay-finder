@@ -1,23 +1,20 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
-  Bath,
   Bed,
+  CalendarDays,
   CheckCircle2,
   MapPin,
-  MessageCircle,
-  Phone,
-  Wallet,
-  Eye,
   ShieldCheck,
+  Users,
 } from "lucide-react";
-import { getProperty, listProperties, recordPropertyView } from "@/lib/properties.functions";
-import { initViewingFeePayment, handleViewingFeeCallback, listAgents } from "@/lib/inquiries.functions";
-import { formatKsh, SITE, whatsappLink } from "@/lib/site";
+import { createBooking } from "@/lib/accommodation.functions";
+import { getProperty, listProperties } from "@/lib/properties.functions";
+import { formatKsh } from "@/lib/site";
 import { PropertyCard } from "@/components/site/PropertyCard";
 
 const propQuery = (slug: string) =>
@@ -75,57 +72,42 @@ function PropertyDetail() {
   const navigate = useNavigate();
   const { data: p } = useSuspenseQuery(propQuery(slug));
   const { data: related } = useSuspenseQuery(relatedQuery());
-  const recordView = useServerFn(recordPropertyView);
-  const startPayment = useServerFn(initViewingFeePayment);
-  const confirmCallback = useServerFn(handleViewingFeeCallback);
-  const agentsFn = useServerFn(listAgents);
-  const agentQuery = useQuery({ queryKey: ["agents", "public"], queryFn: () => agentsFn({ data: {} }) });
+  const startBooking = useServerFn(createBooking);
   const [active, setActive] = useState(0);
-  const [paying, setPaying] = useState(false);
-  const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "success" | "failed">("idle");
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   if (!p) return null;
   const images = p.images?.length ? p.images : p.cover_image ? [p.cover_image] : [];
   const cover =
     images[active] ?? "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200";
-  const msg = `Hello, I'm interested in "${p.title}" listed by Umoja Housing Agency.`;
+  const today = new Date().toISOString().slice(0, 10);
 
-  async function payViewingFee() {
-    setPaying(true);
-    setPaymentMessage(null);
+  async function bookStay(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBookingError(null);
+    const form = new FormData(event.currentTarget);
     try {
-      const phone = window.prompt("Enter your M-Pesa phone number (e.g. 0715XXXXXX)", "")?.trim();
-      if (!phone) throw new Error("Phone number is required");
-      const reference = `view-${p.slug}-${Date.now()}`;
-      const result = await startPayment({ data: { propertyId: p.id, phone, amount: Number(p.viewing_fee ?? 300), reference } });
-      setPaymentMessage(result.message ?? "STK push initiated.");
-      setPaymentStatus("idle");
-      toast.success("STK push initiated");
-      await confirmCallback({ data: { reference, status: "success", amount: Number(p.viewing_fee ?? 300), message: "Payment received" } });
-      setPaymentStatus("success");
-      navigate({ to: `/payments/success?property=${encodeURIComponent(p.slug)}&ref=${encodeURIComponent(reference)}` });
+      const result = await startBooking({
+        data: {
+          propertyId: p?.id ?? "",
+          checkIn: String(form.get("check_in")),
+          checkOut: String(form.get("check_out")),
+          guestCount: Number(form.get("guest_count")),
+          paymentMethod: String(form.get("payment_method")) as "mpesa" | "card",
+          phone: String(form.get("phone") || ""),
+          email: String(form.get("email") || "") || undefined,
+          specialRequests: String(form.get("special_requests") || "") || undefined,
+        },
+      });
+      if (result.checkout.checkoutUrl) window.location.assign(result.checkout.checkoutUrl);
+      else if (result.checkout.instructions) toast.message(result.checkout.instructions);
+      await navigate({ to: "/bookings" });
     } catch (error) {
-      setPaymentMessage((error as Error).message);
-      setPaymentStatus("failed");
-      toast.error((error as Error).message);
-      await confirmCallback({ data: { reference: `view-${p.slug}-${Date.now()}`, status: "failed", message: (error as Error).message } });
-    } finally {
-      setPaying(false);
+      const message = error instanceof Error ? error.message : "Could not start your booking.";
+      setBookingError(message);
+      toast.error(message);
     }
   }
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      void recordView({ data: { slug } });
-    }
-  }, [recordView, slug]);
-
-  const agent = (agentQuery.data ?? []).find(
-    (item: any) =>
-      item.phone && p.agent_phone && item.phone === p.agent_phone ||
-      item.name && p.agent_name && item.name === p.agent_name,
-  );
 
   return (
     <div className="pt-24 pb-20">
@@ -142,10 +124,8 @@ function PropertyDetail() {
           <div>
             <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-lift">
               <img src={cover} alt={p.title} className="h-full w-full object-cover" />
-              <span
-                className={`absolute top-4 left-4 rounded-full px-3 py-1 text-xs font-semibold ${p.available ? "bg-emerald-500 text-white" : "bg-red-500 text-white"}`}
-              >
-                {p.available ? "Available" : "Taken"}
+              <span className="absolute top-4 left-4 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white">
+                Verified stay
               </span>
             </div>
             {images.length > 1 && (
@@ -183,68 +163,72 @@ function PropertyDetail() {
                 <MapPin className="h-4 w-4" /> {p.location} · {p.region}
               </div>
             </div>
-
             <div className="rounded-3xl gradient-deep text-white p-6 shadow-lift">
-              <div className="text-sm text-white/70">Monthly Rent</div>
-              <div className="font-display text-4xl font-bold">{formatKsh(p.rent)}</div>
+              <div className="text-sm text-white/70">Nightly rate</div>
+              <div className="font-display text-4xl font-bold">{formatKsh(p.nightly_rate)}</div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-2xl bg-white/10 p-3">
+                  <Users className="h-4 w-4 mx-auto mb-1" />
+                  <div className="text-xs text-white/70">Guests</div>
+                  <div className="font-semibold">{p.max_guests}</div>
+                </div>
                 <div className="rounded-2xl bg-white/10 p-3">
                   <Bed className="h-4 w-4 mx-auto mb-1" />
                   <div className="text-xs text-white/70">Bedrooms</div>
                   <div className="font-semibold">{p.bedrooms ?? 0}</div>
                 </div>
                 <div className="rounded-2xl bg-white/10 p-3">
-                  <Bath className="h-4 w-4 mx-auto mb-1" />
-                  <div className="text-xs text-white/70">Bath</div>
-                  <div className="font-semibold">{p.bathrooms ?? 1}</div>
-                </div>
-                <div className="rounded-2xl bg-white/10 p-3">
-                  <Wallet className="h-4 w-4 mx-auto mb-1" />
-                  <div className="text-xs text-white/70">Deposit</div>
-                  <div className="font-semibold text-sm">
-                    {p.deposit ? formatKsh(p.deposit) : "—"}
-                  </div>
+                  <CalendarDays className="h-4 w-4 mx-auto mb-1" />
+                  <div className="text-xs text-white/70">Minimum</div>
+                  <div className="font-semibold">{p.min_nights} night{p.min_nights === 1 ? "" : "s"}</div>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <a
-                href={`tel:${p.agent_phone || SITE.phone}`}
-                className="inline-flex items-center justify-center gap-2 rounded-full gradient-brand px-6 py-4 font-semibold text-white shadow-soft hover:shadow-lift transition"
-              >
-                <Phone className="h-4 w-4" /> Call Agent
-              </a>
-              <a
-                href={whatsappLink(msg)}
-                target="_blank"
-                rel="noopener"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white px-6 py-4 font-semibold hover:opacity-90 transition"
-              >
-                <MessageCircle className="h-4 w-4" /> WhatsApp Agent
-              </a>
-              {agent?.slug && (
-                <Link
-                  to="/agents/$slug"
-                  params={{ slug: agent.slug }}
-                  className="inline-flex items-center justify-center rounded-full border px-6 py-3 text-sm font-semibold hover:bg-muted"
-                >
-                  View Agent Profile
-                </Link>
-              )}
-              <button
-                onClick={payViewingFee}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-secondary text-secondary px-6 py-4 font-semibold hover:bg-secondary hover:text-white transition disabled:opacity-70"
-                disabled={paying}
-              >
-                <Eye className="h-4 w-4" /> {paying ? "Processing…" : `Pay Viewing Fee · ${formatKsh(p.viewing_fee)}`}
+            <form onSubmit={bookStay} className="space-y-3 rounded-3xl bg-card p-6 shadow-soft">
+              <h2 className="font-display text-xl font-bold">Book your stay</h2>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Arrival
+                  <input name="check_in" type="date" min={today} required className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                </label>
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Departure
+                  <input name="check_out" type="date" min={today} required className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+                </label>
+              </div>
+              <label className="block text-xs font-semibold text-muted-foreground">
+                Guests
+                <input name="guest_count" type="number" min="1" max={p.max_guests} defaultValue="1" required className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+              </label>
+              <label className="block text-xs font-semibold text-muted-foreground">
+                Payment method
+                <select name="payment_method" className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm">
+                  <option value="mpesa">M-Pesa</option>
+                  <option value="card">Card</option>
+                </select>
+              </label>
+              <label className="block text-xs font-semibold text-muted-foreground">
+                M-Pesa phone (if selected)
+                <input name="phone" type="tel" placeholder="2547…" className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+              </label>
+              <label className="block text-xs font-semibold text-muted-foreground">
+                Email for receipt
+                <input name="email" type="email" className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+              </label>
+              <label className="block text-xs font-semibold text-muted-foreground">
+                Note to host (optional)
+                <textarea name="special_requests" rows={2} maxLength={2000} className="mt-1 block w-full rounded-xl border bg-background px-3 py-2.5 text-sm" />
+              </label>
+              {bookingError && <p role="alert" className="text-sm text-destructive">{bookingError}</p>}
+              <button className="w-full rounded-full gradient-brand px-6 py-3.5 font-semibold text-white shadow-soft hover:shadow-lift transition">
+                Continue to secure payment
               </button>
-              {paymentMessage && (
-                <p className={`text-xs text-center ${paymentStatus === "success" ? "text-emerald-600" : paymentStatus === "failed" ? "text-red-600" : "text-muted-foreground"}`}>
-                  {paymentMessage}
-                </p>
-              )}
-            </div>
+              <p className="text-center text-xs text-muted-foreground">
+                Sign in is required to book. Payment, fees, and cancellation terms are shown before confirmation.
+              </p>
+              <Link to="/auth" className="block text-center text-sm font-semibold text-primary">Sign in or create an account</Link>
+            </form>
           </div>
         </div>
 
@@ -273,8 +257,8 @@ function PropertyDetail() {
               <ShieldCheck className="h-5 w-5 text-primary" /> Verified by Umoja
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Our team has inspected this property. Address details are shared after viewing fee
-              confirmation.
+              This accommodation has passed listing verification. Full address and directions are
+              available with your confirmed booking.
             </p>
             <dl className="mt-6 space-y-3 text-sm">
               <div className="flex justify-between">
@@ -286,20 +270,20 @@ function PropertyDetail() {
                 <dd className="font-semibold">{p.location}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Rent</dt>
-                <dd className="font-semibold">{formatKsh(p.rent)}</dd>
+                  <dt className="text-muted-foreground">Nightly rate</dt>
+                  <dd className="font-semibold">{formatKsh(p.nightly_rate)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Cleaning fee</dt>
+                  <dd className="font-semibold">{formatKsh(p.cleaning_fee)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Deposit</dt>
-                <dd className="font-semibold">{formatKsh(p.deposit ?? null)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-muted-foreground">Viewing Fee</dt>
-                <dd className="font-semibold">{formatKsh(p.viewing_fee)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-muted-foreground">Agent</dt>
-                <dd className="font-semibold">{p.agent_name ?? "Umoja Agent"}</dd>
+                  <dt className="text-muted-foreground">Check-in</dt>
+                  <dd className="font-semibold">{p.check_in_time.slice(0, 5)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Check-out</dt>
+                  <dd className="font-semibold">{p.check_out_time.slice(0, 5)}</dd>
               </div>
             </dl>
           </div>
