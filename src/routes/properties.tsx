@@ -3,7 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { z } from "zod";
-import { listProperties } from "@/lib/properties.functions";
+import { listDestinations, listProperties } from "@/lib/properties.functions";
 import { PropertyCard } from "@/components/site/PropertyCard";
 import { SITE } from "@/lib/site";
 
@@ -48,6 +48,10 @@ const queryOpts = (filters: SearchFilters) => {
       }),
   });
 };
+const destinationsOpts = queryOptions({
+  queryKey: ["destinations"],
+  queryFn: () => listDestinations(),
+});
 
 export const Route = createFileRoute("/properties")({
   head: () => ({
@@ -64,18 +68,21 @@ export const Route = createFileRoute("/properties")({
   }),
   validateSearch: (search) => searchSchema.parse(search),
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(
-      queryOpts({
-        destination: "",
-        propertyType: "",
-        maxNightlyRate: "",
-        checkIn: "",
-        checkOut: "",
-        guestCount: "",
-        amenities: [],
-        query: "",
-      }),
-    ),
+    Promise.all([
+      context.queryClient.ensureQueryData(
+        queryOpts({
+          destination: "",
+          propertyType: "",
+          maxNightlyRate: "",
+          checkIn: "",
+          checkOut: "",
+          guestCount: "",
+          amenities: [],
+          query: "",
+        }),
+      ),
+      context.queryClient.ensureQueryData(destinationsOpts),
+    ]),
   component: Properties,
 });
 
@@ -92,6 +99,7 @@ function Properties() {
     query: search.query ?? "",
   });
   const { data } = useSuspenseQuery(queryOpts(filters));
+  const { data: destinations } = useSuspenseQuery(destinationsOpts);
 
   const toggleAmenity = (amenity: string) =>
     setFilters((current) => ({
@@ -155,8 +163,10 @@ function Properties() {
                 className="mt-1.5 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All destinations</option>
-                {SITE.destinations.map((destination) => (
-                  <option key={destination}>{destination}</option>
+                {destinations.map((destination) => (
+                  <option key={destination.id} value={destination.name}>
+                    {destination.name} · {destination.region}
+                  </option>
                 ))}
               </select>
             </div>

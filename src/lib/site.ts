@@ -7,18 +7,6 @@ export const SITE = {
   whatsapp: "254715842716",
   email: "info@umojahousing.co.ke",
   address: "Kisii Town, Gusii Region, Kenya",
-  destinations: [
-    "Nairobi",
-    "Mombasa",
-    "Kisumu",
-    "Kisii",
-    "Nyamira",
-    "Nakuru",
-    "Eldoret",
-    "Keroka",
-    "Ogembo",
-    "Suneka",
-  ],
   propertyTypes: [
     "Apartment",
     "Serviced Apartment",

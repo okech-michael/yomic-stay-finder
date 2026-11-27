@@ -16,7 +16,7 @@ import {
   Phone,
   MessageCircle,
 } from "lucide-react";
-import { listProperties, getStats } from "@/lib/properties.functions";
+import { listProperties, listDestinations, getStats } from "@/lib/properties.functions";
 import { PropertyCard } from "@/components/site/PropertyCard";
 import { Counter } from "@/components/site/Counter";
 import { SITE, telLink, whatsappLink } from "@/lib/site";
@@ -41,6 +41,10 @@ const allOpts = queryOptions({
   queryFn: () => listProperties({ data: { limit: 6 } }),
 });
 const statsOpts = queryOptions({ queryKey: ["stats"], queryFn: () => getStats() });
+const destinationsOpts = queryOptions({
+  queryKey: ["destinations"],
+  queryFn: () => listDestinations(),
+});
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -68,6 +72,7 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(featuredOpts),
       context.queryClient.ensureQueryData(allOpts),
       context.queryClient.ensureQueryData(statsOpts),
+      context.queryClient.ensureQueryData(destinationsOpts),
     ]);
   },
   component: Index,
@@ -143,6 +148,7 @@ const testimonials = [
 ];
 
 function Index() {
+  const { data: destinations } = useSuspenseQuery(destinationsOpts);
   const { data: featured } = useSuspenseQuery(featuredOpts);
   const { data: all } = useSuspenseQuery(allOpts);
   const { data: stats } = useSuspenseQuery(statsOpts);
@@ -224,9 +230,9 @@ function Index() {
                 className="flex-1 bg-transparent text-sm font-medium text-foreground outline-none"
               >
                 <option value="">Choose destination</option>
-                {SITE.destinations.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
+                {destinations.map((destination) => (
+                  <option key={destination.id} value={destination.name}>
+                    {destination.name} · {destination.region}
                   </option>
                 ))}
               </select>

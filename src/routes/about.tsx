@@ -1,7 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { CheckCircle2, MapPin, Target, Telescope, HeartHandshake } from "lucide-react";
 import { SITE } from "@/lib/site";
+import { listDestinations } from "@/lib/properties.functions";
 import hero1 from "@/assets/hero-1.jpg";
+
+const destinationsOpts = queryOptions({
+  queryKey: ["destinations"],
+  queryFn: () => listDestinations(),
+});
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -16,10 +23,13 @@ export const Route = createFileRoute("/about")({
       { property: "og:description", content: "Know where you'll stay before you travel." },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(destinationsOpts),
   component: About,
 });
 
 function About() {
+  const { data: destinations } = useSuspenseQuery(destinationsOpts);
+
   return (
     <div className="pt-20">
       <section className="relative h-[60vh] min-h-[420px] overflow-hidden flex items-end">
@@ -77,13 +87,15 @@ function About() {
               <MapPin className="h-7 w-7 text-primary" /> Where we operate
             </h2>
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {SITE.destinations.map((r) => (
+              {destinations.map((destination) => (
                 <div
-                  key={r}
+                  key={destination.id}
                   className="rounded-2xl bg-card border p-5 shadow-soft hover:shadow-lift transition flex items-center gap-3"
                 >
                   <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                  <span className="font-semibold">{r}</span>
+                  <span className="font-semibold">
+                    {destination.name} · {destination.region}
+                  </span>
                 </div>
               ))}
             </div>
