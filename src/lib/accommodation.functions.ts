@@ -8,7 +8,11 @@ import { getPaymentGateway } from "@/lib/payment-gateway";
 
 const ListingInput = z.object({
   title: z.string().min(3).max(200),
-  slug: z.string().min(3).max(200).regex(/^[a-z0-9-]+$/),
+  slug: z
+    .string()
+    .min(3)
+    .max(200)
+    .regex(/^[a-z0-9-]+$/),
   description: z.string().max(5000).optional().nullable(),
   property_type: z.string().min(2).max(50),
   destination_id: z.string().uuid(),
@@ -21,34 +25,47 @@ const ListingInput = z.object({
   min_nights: z.coerce.number().int().min(1).max(365).default(1),
   bedrooms: z.coerce.number().int().min(0).max(100).default(0),
   bathrooms: z.coerce.number().min(0).max(100).default(1),
-  check_in_time: z.string().regex(/^\d{2}:\d{2}$/).default("15:00"),
-  check_out_time: z.string().regex(/^\d{2}:\d{2}$/).default("10:00"),
+  check_in_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .default("15:00"),
+  check_out_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .default("10:00"),
   house_rules: z.string().max(3000).optional().nullable(),
   amenities: z.array(z.string().max(80)).max(50).default([]),
   images: z.array(z.string().url()).max(20).default([]),
   cover_image: z.string().url().optional().nullable(),
 });
+const ListingPatch = ListingInput.partial()
+  .strict()
+  .refine((patch) => Object.keys(patch).length > 0, {
+    message: "Change at least one listing field.",
+  });
 
-const SettingsInput = z.object({
-  commission_bps: z.coerce.number().int().min(0).max(10000),
-  commission_bearer: z.enum(["host", "guest"]),
-  booking_payment_mode: z.enum(["full", "first_night", "percentage"]),
-  booking_payment_percent: z.coerce.number().min(1).max(100).optional().nullable(),
-  cancellation_policy: z.object({
-    free_cancellation_hours: z.coerce.number().int().min(0).max(8760),
-    refund_before_checkin_percent: z.coerce.number().min(0).max(100),
-    refund_after_deadline_percent: z.coerce.number().min(0).max(100),
-  }),
-  enabled_payment_methods: z.array(z.enum(["mpesa", "card"])).min(1),
-}).superRefine((value, context) => {
-  if (value.booking_payment_mode === "percentage" && value.booking_payment_percent == null) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Set a payment percentage for percentage-based bookings.",
-      path: ["booking_payment_percent"],
-    });
-  }
-});
+const SettingsInput = z
+  .object({
+    commission_bps: z.coerce.number().int().min(0).max(10000),
+    commission_bearer: z.enum(["host", "guest"]),
+    booking_payment_mode: z.enum(["full", "first_night", "percentage"]),
+    booking_payment_percent: z.coerce.number().min(1).max(100).optional().nullable(),
+    cancellation_policy: z.object({
+      free_cancellation_hours: z.coerce.number().int().min(0).max(8760),
+      refund_before_checkin_percent: z.coerce.number().min(0).max(100),
+      refund_after_deadline_percent: z.coerce.number().min(0).max(100),
+    }),
+    enabled_payment_methods: z.array(z.enum(["mpesa", "card"])).min(1),
+  })
+  .superRefine((value, context) => {
+    if (value.booking_payment_mode === "percentage" && value.booking_payment_percent == null) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Set a payment percentage for percentage-based bookings.",
+        path: ["booking_payment_percent"],
+      });
+    }
+  });
 
 async function requireRole(
   context: { supabase: SupabaseClient<Database>; userId: string },
@@ -62,6 +79,20 @@ async function requireRole(
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error(`The ${role.replace("_", " ")} role is required.`);
+}
+
+async function requireOwnedProperty(
+  context: { supabase: SupabaseClient<Database>; userId: string },
+  propertyId: string,
+) {
+  const { data, error } = await context.supabase
+    .from("properties")
+    .select("id")
+    .eq("id", propertyId)
+    .eq("owner_id", context.userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Listing not found or you do not own it.");
 }
 
 export const requestPropertyOwnerRole = createServerFn({ method: "POST" })
@@ -108,6 +139,28 @@ export const createOwnerListing = createServerFn({ method: "POST" })
     return property;
   });
 
+export const ownerUpdateListing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ propertyId: z.string().uuid(), patch: ListingPatch }))
+  .handler(async ({ data, context }) => {
+    await requireRole(context, "property_owner");
+    await requireOwnedProperty(context, data.propertyId);
+    const patch = { ...data.patch };
+    if (patch.images !== undefined && patch.cover_image === undefined) {
+      patch.cover_image = patch.images[0] ?? null;
+    }
+    const { data: property, error } = await context.supabase
+      .from("properties")
+      .update(patch)
+      .eq("id", data.propertyId)
+      .eq("owner_id", context.userId)
+      .select("*")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!property) throw new Error("Listing not found or you do not own it.");
+    return property;
+  });
+
 export const ownerListListings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -146,6 +199,7 @@ export const setOwnerAvailability = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireRole(context, "property_owner");
+    await requireOwnedProperty(context, data.propertyId);
     const { error } = await context.supabase.from("property_availability").upsert(
       {
         property_id: data.propertyId,
@@ -156,6 +210,38 @@ export const setOwnerAvailability = createServerFn({ method: "POST" })
       },
       { onConflict: "property_id,stay_date" },
     );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const ownerListAvailability = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ propertyId: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    await requireRole(context, "property_owner");
+    await requireOwnedProperty(context, data.propertyId);
+    const { data: availability, error } = await context.supabase
+      .from("property_availability")
+      .select("*")
+      .eq("property_id", data.propertyId)
+      .gte("stay_date", new Date().toISOString().slice(0, 10))
+      .order("stay_date")
+      .limit(90);
+    if (error) throw new Error(error.message);
+    return availability ?? [];
+  });
+
+export const ownerDeleteAvailability = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ propertyId: z.string().uuid(), stayDate: z.string().date() }))
+  .handler(async ({ data, context }) => {
+    await requireRole(context, "property_owner");
+    await requireOwnedProperty(context, data.propertyId);
+    const { error } = await context.supabase
+      .from("property_availability")
+      .delete()
+      .eq("property_id", data.propertyId)
+      .eq("stay_date", data.stayDate);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -175,15 +261,23 @@ export const ownerListBookings = createServerFn({ method: "GET" })
       context.supabase
         .from("properties")
         .select("id,title,location,address,latitude,longitude")
-        .in("id", data.map((booking) => booking.property_id)),
+        .in(
+          "id",
+          data.map((booking) => booking.property_id),
+        ),
       context.supabase
         .from("profiles")
         .select("id,full_name,phone")
-        .in("id", data.map((booking) => booking.guest_id)),
+        .in(
+          "id",
+          data.map((booking) => booking.guest_id),
+        ),
     ]);
     if (propertiesResult.error) throw new Error(propertiesResult.error.message);
     if (guestsResult.error) throw new Error(guestsResult.error.message);
-    const properties = new Map((propertiesResult.data ?? []).map((property) => [property.id, property]));
+    const properties = new Map(
+      (propertiesResult.data ?? []).map((property) => [property.id, property]),
+    );
     const guests = new Map((guestsResult.data ?? []).map((guest) => [guest.id, guest]));
     return data.map((booking) => ({
       ...booking,
@@ -194,7 +288,9 @@ export const ownerListBookings = createServerFn({ method: "GET" })
 
 export const ownerUpdateBookingStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator(z.object({ bookingId: z.string().uuid(), status: z.enum(["checked_in", "completed"]) }))
+  .validator(
+    z.object({ bookingId: z.string().uuid(), status: z.enum(["checked_in", "completed"]) }),
+  )
   .handler(async ({ data, context }) => {
     await requireRole(context, "property_owner");
     const { error } = await context.supabase.rpc("owner_update_booking_status", {
@@ -220,15 +316,18 @@ export const guestListBookings = createServerFn({ method: "GET" })
       context.supabase
         .from("properties")
         .select("id,title,location,address,latitude,longitude,cover_image")
-        .in("id", data.map((booking) => booking.property_id)),
+        .in(
+          "id",
+          data.map((booking) => booking.property_id),
+        ),
       context.supabase
         .from("profiles")
         .select("id,full_name,phone")
-        .in("id", data.map((booking) => booking.owner_id)),
-      context.supabase
-        .from("booking_receipts")
-        .select("*")
-        .in("booking_id", bookingIds),
+        .in(
+          "id",
+          data.map((booking) => booking.owner_id),
+        ),
+      context.supabase.from("booking_receipts").select("*").in("booking_id", bookingIds),
       context.supabase
         .from("property_reviews")
         .select("id,booking_id,rating,review_text")
@@ -238,10 +337,16 @@ export const guestListBookings = createServerFn({ method: "GET" })
     if (hostsResult.error) throw new Error(hostsResult.error.message);
     if (receiptsResult.error) throw new Error(receiptsResult.error.message);
     if (reviewsResult.error) throw new Error(reviewsResult.error.message);
-    const properties = new Map((propertiesResult.data ?? []).map((property) => [property.id, property]));
+    const properties = new Map(
+      (propertiesResult.data ?? []).map((property) => [property.id, property]),
+    );
     const hosts = new Map((hostsResult.data ?? []).map((host) => [host.id, host]));
-    const receipts = new Map((receiptsResult.data ?? []).map((receipt) => [receipt.booking_id, receipt]));
-    const reviews = new Map((reviewsResult.data ?? []).map((review) => [review.booking_id, review]));
+    const receipts = new Map(
+      (receiptsResult.data ?? []).map((receipt) => [receipt.booking_id, receipt]),
+    );
+    const reviews = new Map(
+      (reviewsResult.data ?? []).map((review) => [review.booking_id, review]),
+    );
     return data.map((booking) => ({
       ...booking,
       property: properties.get(booking.property_id) ?? null,
@@ -349,7 +454,9 @@ export const createBooking = createServerFn({ method: "POST" })
         p_reason: "Payment could not be initiated.",
       });
       if (cancelError) {
-        throw new Error(`Payment setup failed and the pending booking could not be released: ${cancelError.message}`);
+        throw new Error(
+          `Payment setup failed and the pending booking could not be released: ${cancelError.message}`,
+        );
       }
       throw error;
     }
@@ -446,7 +553,10 @@ export const adminListVerifications = createServerFn({ method: "GET" })
     const properties = await context.supabase
       .from("properties")
       .select("id,title,location,nightly_rate,currency")
-      .in("id", (data ?? []).map((item) => item.property_id));
+      .in(
+        "id",
+        (data ?? []).map((item) => item.property_id),
+      );
     if (properties.error) throw new Error(properties.error.message);
     const byId = new Map((properties.data ?? []).map((property) => [property.id, property]));
     return (data ?? []).map((item) => ({ ...item, property: byId.get(item.property_id) ?? null }));
