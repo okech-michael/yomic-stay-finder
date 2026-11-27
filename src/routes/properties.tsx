@@ -60,7 +60,7 @@ export const Route = createFileRoute("/properties")({
       {
         name: "description",
         content:
-          "Search short-stay accommodation across Kenya, compare locations, and follow provider links to check current prices and availability.",
+          "Search verified short-stay accommodation across Kenya, compare locations and facilities, and book with Yomic.",
       },
       { property: "og:title", content: `Find a Stay — ${SITE.name}` },
       { property: "og:description", content: "Know where you'll stay before you travel." },
@@ -130,7 +130,7 @@ function Properties() {
           </span>
           <h1 className="mt-2 font-display text-4xl md:text-5xl font-bold">Find a Stay</h1>
           <p className="mt-2 text-muted-foreground">
-            Find places to stay across Kenya and check current details with each provider.
+            Find verified places to stay across Kenya and book directly with Yomic.
           </p>
         </div>
 
@@ -280,10 +280,6 @@ function Properties() {
               <span className="font-semibold text-foreground">{data.length}</span> stays listed for
               your search
             </div>
-            <p className="mb-4 text-xs text-muted-foreground">
-              External listings link to their provider. Confirm current price and availability
-              directly before booking.
-            </p>
             {data.length === 0 ? (
               <div className="rounded-3xl border border-dashed p-16 text-center">
                 <p className="text-muted-foreground">No stays match these dates and filters yet.</p>

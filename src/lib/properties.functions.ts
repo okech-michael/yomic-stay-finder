@@ -17,8 +17,6 @@ export type PropertyListing = {
   images: string[] | null;
   featured: boolean;
   amenities: string[] | null;
-  source_name: string | null;
-  source_url: string | null;
 };
 
 export const listDestinations = createServerFn({ method: "GET" }).handler(async () => {
@@ -118,67 +116,7 @@ export const listProperties = createServerFn({ method: "GET" })
       result = result.filter((property) => !unavailable.has(property.id));
     }
 
-    const internalListings: PropertyListing[] = result.map((property) => ({
-      ...property,
-      source_name: null,
-      source_url: null,
-    }));
-    const externalFiltersAreSupported =
-      !data.featuredOnly &&
-      !data.propertyType &&
-      !data.maxNightlyRate &&
-      !data.guestCount &&
-      !data.amenities?.length;
-    if (!externalFiltersAreSupported) return internalListings.slice(0, listingLimit);
-
-    let destinationId: string | undefined;
-    if (data.destination) {
-      const { data: destination, error: destinationError } = await sb
-        .from("destinations")
-        .select("id")
-        .eq("name", data.destination)
-        .maybeSingle();
-      if (destinationError) throw new Error(destinationError.message);
-      destinationId = destination?.id;
-      if (!destinationId) return internalListings.slice(0, listingLimit);
-    }
-
-    let externalQuery = sb
-      .from("external_listings")
-      .select("id,title,town,source_name,source_url")
-      .eq("is_active", true)
-      .order("title")
-      .limit(500);
-    if (destinationId) externalQuery = externalQuery.eq("destination_id", destinationId);
-    const { data: externalRows, error: externalError } = await externalQuery;
-    if (externalError) throw new Error(externalError.message);
-    const needle = data.query?.toLocaleLowerCase();
-    const externalListings: PropertyListing[] = (externalRows ?? [])
-      .filter(
-        (listing) =>
-          !needle ||
-          listing.title.toLocaleLowerCase().includes(needle) ||
-          listing.town.toLocaleLowerCase().includes(needle),
-      )
-      .map((listing) => ({
-        id: listing.id,
-        slug: null,
-        title: listing.title,
-        property_type: "External listing",
-        location: listing.town,
-        nightly_rate: null,
-        max_guests: null,
-        bedrooms: null,
-        bathrooms: null,
-        cover_image: null,
-        images: null,
-        featured: false,
-        amenities: null,
-        source_name: listing.source_name,
-        source_url: listing.source_url,
-      }));
-
-    return [...internalListings, ...externalListings].slice(0, listingLimit);
+    return result;
   });
 
 export const getProperty = createServerFn({ method: "GET" })
