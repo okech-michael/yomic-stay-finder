@@ -60,7 +60,7 @@ export const Route = createFileRoute("/properties")({
       {
         name: "description",
         content:
-          "Find verified short-stay accommodation across Kenya. Compare nightly rates, facilities, and locations, then book before you travel.",
+          "Search short-stay accommodation across Kenya, compare locations, and follow provider links to check current prices and availability.",
       },
       { property: "og:title", content: `Find a Stay — ${SITE.name}` },
       { property: "og:description", content: "Know where you'll stay before you travel." },
@@ -130,7 +130,7 @@ function Properties() {
           </span>
           <h1 className="mt-2 font-display text-4xl md:text-5xl font-bold">Find a Stay</h1>
           <p className="mt-2 text-muted-foreground">
-            Compare verified places and arrange your stay before travelling.
+            Find places to stay across Kenya and check current details with each provider.
           </p>
         </div>
 
@@ -277,14 +277,16 @@ function Properties() {
 
           <div>
             <div className="mb-4 text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">{data.length}</span> stays available
-              for your search
+              <span className="font-semibold text-foreground">{data.length}</span> stays listed for
+              your search
             </div>
+            <p className="mb-4 text-xs text-muted-foreground">
+              External listings link to their provider. Confirm current price and availability
+              directly before booking.
+            </p>
             {data.length === 0 ? (
               <div className="rounded-3xl border border-dashed p-16 text-center">
-                <p className="text-muted-foreground">
-                  No stays match these dates and filters yet.
-                </p>
+                <p className="text-muted-foreground">No stays match these dates and filters yet.</p>
                 <Link to="/contact" className="mt-4 inline-block text-primary font-semibold">
                   Tell us what you're looking for
                 </Link>

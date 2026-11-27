@@ -3,6 +3,24 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
+export type PropertyListing = {
+  id: string;
+  slug: string | null;
+  title: string;
+  property_type: string;
+  location: string;
+  nightly_rate: number | null;
+  max_guests: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  cover_image: string | null;
+  images: string[] | null;
+  featured: boolean;
+  amenities: string[] | null;
+  source_name: string | null;
+  source_url: string | null;
+};
+
 export const listDestinations = createServerFn({ method: "GET" }).handler(async () => {
   const sb = publicClient();
   if (!sb) return [];
@@ -53,6 +71,7 @@ export const listProperties = createServerFn({ method: "GET" })
       throw new Error("Provide both arrival and departure dates.");
     }
 
+    const listingLimit = data.limit ?? 24;
     let q = sb
       .from("properties")
       .select(
@@ -62,7 +81,7 @@ export const listProperties = createServerFn({ method: "GET" })
       .eq("verification_status", "verified")
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(data.limit ?? 24);
+      .limit(listingLimit);
     if (data.destination) q = q.eq("location", data.destination);
     if (data.propertyType) q = q.eq("property_type", data.propertyType);
     if (data.maxNightlyRate) q = q.lte("nightly_rate", data.maxNightlyRate);
@@ -82,20 +101,84 @@ export const listProperties = createServerFn({ method: "GET" })
     if (data.guestCount) {
       result = result.filter((property) => property.max_guests >= data.guestCount!);
     }
-    if (!data.checkIn || !data.checkOut || result.length === 0) return result;
+    if (data.checkIn && data.checkOut && result.length > 0) {
+      const propertyIds = result.map((property) => property.id);
+      const { data: unavailableProperties, error: availabilityError } = await sb.rpc(
+        "unavailable_property_ids",
+        {
+          p_property_ids: propertyIds,
+          p_check_in: data.checkIn,
+          p_check_out: data.checkOut,
+        },
+      );
+      if (availabilityError) throw new Error(availabilityError.message);
+      const unavailable = new Set(
+        (unavailableProperties ?? []).map(({ property_id }) => property_id),
+      );
+      result = result.filter((property) => !unavailable.has(property.id));
+    }
 
-    const propertyIds = result.map((property) => property.id);
-    const { data: unavailableProperties, error: availabilityError } = await sb.rpc(
-      "unavailable_property_ids",
-      {
-        p_property_ids: propertyIds,
-        p_check_in: data.checkIn,
-        p_check_out: data.checkOut,
-      },
-    );
-    if (availabilityError) throw new Error(availabilityError.message);
-    const unavailable = new Set((unavailableProperties ?? []).map(({ property_id }) => property_id));
-    return result.filter((property) => !unavailable.has(property.id));
+    const internalListings: PropertyListing[] = result.map((property) => ({
+      ...property,
+      source_name: null,
+      source_url: null,
+    }));
+    const externalFiltersAreSupported =
+      !data.featuredOnly &&
+      !data.propertyType &&
+      !data.maxNightlyRate &&
+      !data.guestCount &&
+      !data.amenities?.length;
+    if (!externalFiltersAreSupported) return internalListings.slice(0, listingLimit);
+
+    let destinationId: string | undefined;
+    if (data.destination) {
+      const { data: destination, error: destinationError } = await sb
+        .from("destinations")
+        .select("id")
+        .eq("name", data.destination)
+        .maybeSingle();
+      if (destinationError) throw new Error(destinationError.message);
+      destinationId = destination?.id;
+      if (!destinationId) return internalListings.slice(0, listingLimit);
+    }
+
+    let externalQuery = sb
+      .from("external_listings")
+      .select("id,title,town,source_name,source_url")
+      .eq("is_active", true)
+      .order("title")
+      .limit(500);
+    if (destinationId) externalQuery = externalQuery.eq("destination_id", destinationId);
+    const { data: externalRows, error: externalError } = await externalQuery;
+    if (externalError) throw new Error(externalError.message);
+    const needle = data.query?.toLocaleLowerCase();
+    const externalListings: PropertyListing[] = (externalRows ?? [])
+      .filter(
+        (listing) =>
+          !needle ||
+          listing.title.toLocaleLowerCase().includes(needle) ||
+          listing.town.toLocaleLowerCase().includes(needle),
+      )
+      .map((listing) => ({
+        id: listing.id,
+        slug: null,
+        title: listing.title,
+        property_type: "External listing",
+        location: listing.town,
+        nightly_rate: null,
+        max_guests: null,
+        bedrooms: null,
+        bathrooms: null,
+        cover_image: null,
+        images: null,
+        featured: false,
+        amenities: null,
+        source_name: listing.source_name,
+        source_url: listing.source_url,
+      }));
+
+    return [...internalListings, ...externalListings].slice(0, listingLimit);
   });
 
 export const getProperty = createServerFn({ method: "GET" })
