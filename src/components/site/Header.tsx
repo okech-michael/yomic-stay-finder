@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Menu, X, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/yomic-stays-logo.svg";
@@ -17,6 +17,7 @@ const nav = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const isHomePage = useLocation({ select: (location) => location.pathname === "/" });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -29,7 +30,7 @@ export function Header() {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-        scrolled ? "glass shadow-soft py-2" : "bg-transparent py-4",
+        scrolled || !isHomePage ? "glass shadow-soft py-2" : "bg-transparent py-4",
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -43,7 +44,9 @@ export function Header() {
               to={n.to}
               className={cn(
                 "px-4 py-2 text-sm font-medium rounded-full transition-colors",
-                scrolled ? "text-foreground hover:text-primary" : "text-white hover:bg-white/10",
+                scrolled || !isHomePage
+                  ? "text-foreground hover:text-primary"
+                  : "text-white hover:bg-white/10",
               )}
               activeProps={{ className: "text-primary bg-primary/10" }}
               activeOptions={{ exact: n.to === "/" }}
@@ -66,7 +69,7 @@ export function Header() {
           onClick={() => setOpen(!open)}
           className={cn(
             "lg:hidden p-2 rounded-full transition-colors",
-            scrolled ? "text-foreground" : "text-white",
+            scrolled || !isHomePage ? "text-foreground" : "text-white",
           )}
         >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

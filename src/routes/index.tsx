@@ -12,7 +12,6 @@ import {
   Wallet,
   Users,
   HeadphonesIcon,
-  Sparkles,
   Quote,
   Phone,
   MessageCircle,
@@ -183,10 +182,6 @@ function Index() {
         </div>
         <div className="relative z-10 w-full mx-auto max-w-7xl px-4 sm:px-6 pb-20 pt-32 text-white">
           <div className="max-w-3xl space-y-6 animate-fade-up">
-            <span className="inline-flex items-center gap-2 rounded-full glass-dark px-4 py-2 text-xs font-medium">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Short stays across Kenya
-            </span>
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] text-balance">
               Know Where You'll Stay{" "}
               <span className="bg-gradient-to-r from-primary to-orange-300 bg-clip-text text-transparent">
